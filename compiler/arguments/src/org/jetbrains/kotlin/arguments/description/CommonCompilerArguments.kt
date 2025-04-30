@@ -327,6 +327,16 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         )
     }
 
+    compilerArgument {
+        name = "Xdump-model"
+        compilerName = "dumpArgumentsDir"
+        description = "Don't even try to use it.".asReleaseDependent()
+        valueDescription = "<dir>".asReleaseDependent()
+        valueType = StringType.defaultNull
+
+        stubLifecycle()
+    }
+
 
     compilerArgument {
         name = "Xmetadata-version"
