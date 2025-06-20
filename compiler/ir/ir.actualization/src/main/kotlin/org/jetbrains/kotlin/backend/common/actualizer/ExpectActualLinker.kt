@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
 import org.jetbrains.kotlin.ir.util.SymbolRemapper
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 import org.jetbrains.kotlin.utils.memoryOptimizedMap
 import org.jetbrains.kotlin.utils.memoryOptimizedMapNotNull
 import org.jetbrains.kotlin.utils.setSize
@@ -220,8 +221,8 @@ internal open class ActualizerVisitor(
             expression.constructorTypeArgumentsCount,
             expression.origin,
         ).apply {
-            copyRemappedTypeArgumentsFrom(expression)
-            transformValueArguments(expression)
+            arguments.assignFrom(expression.arguments) { it?.transform() }
+            typeArguments.assignFrom(expression.typeArguments) { it?.remapType() }
             processAttributes(expression)
 
             // This is a hack to allow actualizing annotation constructors without parameters with constructors with default arguments.
