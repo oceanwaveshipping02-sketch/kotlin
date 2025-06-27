@@ -55073,6 +55073,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
       }
 
       @Test
+      @TestMetadata("rawSupertypes.kt")
+      public void testRawSupertypes() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/rawSupertypes.kt");
+      }
+
+      @Test
       @TestMetadata("simpleSupertypes.kt")
       public void testSimpleSupertypes() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/simpleSupertypes.kt");
