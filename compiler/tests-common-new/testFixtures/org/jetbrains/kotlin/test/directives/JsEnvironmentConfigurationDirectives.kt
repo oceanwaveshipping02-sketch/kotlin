@@ -197,6 +197,11 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
+    val USE_NEW_TRANSPILATION_PIPELINE by directive(
+        description = "Enables new transpilation pipeline, where the compiler produces only latest ECMAScript version and the lowering to older versions is on the swc tool",
+        applicability = DirectiveApplicability.Global
+    )
+
     val ES_MODULES by directive(
         description = "Specify that the compiled js-sources will use ESM module system",
         applicability = DirectiveApplicability.Global

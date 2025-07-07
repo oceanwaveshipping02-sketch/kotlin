@@ -317,8 +317,6 @@ internal fun suspendOrReturn(generator: (continuation: Continuation<Any?>) -> dy
 
     val value = generator(generatorCoroutineImpl)
 
-    if (!isGeneratorSuspendStep(value)) return value
-
     val iterator = value.unsafeCast<JsIterator<Any?>>()
 
     generatorCoroutineImpl.addNewIterator(iterator)

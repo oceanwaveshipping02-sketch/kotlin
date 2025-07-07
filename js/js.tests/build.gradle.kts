@@ -153,6 +153,10 @@ fun Test.setupNodeJs() {
                 computeNodeExec(node, variantComputer.computeNodeBinDir(node.resolvedNodeDir, node.resolvedPlatform)).get()
             }
     )
+    systemProperty(
+        "swc.path",
+       "/Users/Artem.Kobzar/.asdf/installs/nodejs/22.16.0/lib/node_modules/@swc/cli/bin/swc.js"
+    )
 }
 
 fun Test.setUpJsBoxTests(tags: String?) {

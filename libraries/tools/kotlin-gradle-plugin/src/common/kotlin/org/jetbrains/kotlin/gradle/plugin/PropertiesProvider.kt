@@ -166,6 +166,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
                 )
             } ?: KotlinIrJsGeneratedTSValidationStrategy.IGNORE
 
+    val useNewTranspilationPipeline: Boolean
+        get() = booleanProperty("kotlin.js.new.transpilation.pipeline") ?: false
+
     val jsIrGeneratedTypeScriptValidationProdStrategy: KotlinIrJsGeneratedTSValidationStrategy
         get() = property("kotlin.js.ir.production.typescript.validation.strategy")
             .orNull?.let {

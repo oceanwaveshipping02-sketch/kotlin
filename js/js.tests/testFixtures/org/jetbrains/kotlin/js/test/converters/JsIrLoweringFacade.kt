@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.js.backend.ast.ESM_EXTENSION
 import org.jetbrains.kotlin.js.backend.ast.REGULAR_EXTENSION
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.test.handlers.JsBoxRunner
+import org.jetbrains.kotlin.js.test.tools.SwcRunner
 import org.jetbrains.kotlin.js.test.utils.extractTestPackage
 import org.jetbrains.kotlin.js.test.utils.jsIrIncrementalDataProvider
 import org.jetbrains.kotlin.js.test.utils.wrapWithModuleEmulationMarkers
@@ -178,7 +179,8 @@ class JsIrLoweringFacade(
             .filter { isEsModules || it.granularity != JsGenerationGranularity.PER_FILE }
             .toSet()
         val compilationOut = transformer.generateModule(loweredIr.allModules, translationModes, isEsModules)
-        return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut).dump(module)
+        return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut)
+            .dump(module)
     }
 
     private fun IrModuleFragment.resolveTestPaths() {
@@ -194,6 +196,7 @@ class JsIrLoweringFacade(
         val moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)
 
         val generateDts = JsEnvironmentConfigurationDirectives.GENERATE_DTS in module.directives
+        val useNewTranspilationPipeline = JsEnvironmentConfigurationDirectives.USE_NEW_TRANSPILATION_PIPELINE in module.directives
         val dontSkipRegularMode = JsEnvironmentConfigurationDirectives.SKIP_REGULAR_MODE !in module.directives
 
         if (dontSkipRegularMode) {
@@ -210,6 +213,12 @@ class JsIrLoweringFacade(
                     )
                 }
                 output.writeTo(outputFile, moduleId, moduleKind)
+
+                if (useNewTranspilationPipeline) {
+                    val inputDir = outputFile.parentFile
+                    outputFile.copyTo(File(inputDir, "pre-swc-${outputFile.name}"))
+                    SwcRunner.exec(inputDir, inputDir, moduleKind)
+                }
             }
         }
 

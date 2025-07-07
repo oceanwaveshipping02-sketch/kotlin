@@ -60,9 +60,10 @@ class VersionFetcher : AutoCloseable {
     private suspend fun fetchPackageInformationAsync(
         packageName: String,
     ): String {
+        val namespacePrefix = "@"
         val packagePath =
-            if (packageName.startsWith("@"))
-                "@" + encodeURIComponent(packageName)
+            if (packageName.startsWith(namespacePrefix))
+                namespacePrefix + encodeURIComponent(packageName.removePrefix(namespacePrefix))
             else
                 encodeURIComponent(packageName)
 

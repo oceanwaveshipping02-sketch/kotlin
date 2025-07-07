@@ -5,10 +5,13 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.ir
 
+import org.gradle.api.Action
+import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.*
@@ -25,7 +28,11 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.wasm.npm.WasmNpmResolverPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmResolverPlugin
+import org.jetbrains.kotlin.gradle.targets.js.swc.BrowserlistQuery
+import org.jetbrains.kotlin.gradle.targets.js.swc.PlatformRestrictions
+import org.jetbrains.kotlin.gradle.targets.js.swc.SwcEnvTargets
 import org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.*
@@ -248,6 +255,7 @@ constructor(
 
         addSubTarget(KotlinNodeJsIr::class.java) {
             configureSubTarget()
+            subTargetConfigurators.add(SwcConfigurator(this))
             subTargetConfigurators.add(LibraryConfigurator(this))
             subTargetConfigurators.add(NodeJsEnvironmentConfigurator(this))
         }
@@ -359,6 +367,37 @@ constructor(
                         }
                     }
             }
+    }
+
+    internal val envTargets: Property<SwcEnvTargets> = project.objects.property<SwcEnvTargets>()
+
+    private var platformRestrictionsApplier: MutableList<Action<PlatformRestrictions>> =
+        mutableListOf()
+
+    @ExperimentalDeclarativePlatformRestrictionDsl
+    override var platforms: String = ""
+        set(value) {
+            if (!propertiesProvider.useNewTranspilationPipeline)
+                throw GradleException("The platform API is unavailable without the new transpilation pipeline, please put `kotlin.js.new.transpilation.pipeline=true` in the `gradle.properties` file")
+            field = value
+            if (value.isNotEmpty()) envTargets.set(BrowserlistQuery(value))
+        }
+
+    @ExperimentalDeclarativePlatformRestrictionDsl
+    override fun platforms(body: Action<PlatformRestrictions>) {
+        if (!propertiesProvider.useNewTranspilationPipeline)
+            throw GradleException("The platform API is unavailable without the new transpilation pipeline, please put `kotlin.js.new.transpilation.pipeline=true` in the `gradle.properties` file")
+        platforms = ""
+        val appliers = platformRestrictionsApplier
+
+        appliers.add(body)
+        envTargets.set(project.provider {
+            PlatformRestrictions().apply {
+                appliers.forEach { action ->
+                    action.execute(this)
+                }
+            }
+        })
     }
 
     override val compilerOptions: KotlinJsCompilerOptions = project.objects

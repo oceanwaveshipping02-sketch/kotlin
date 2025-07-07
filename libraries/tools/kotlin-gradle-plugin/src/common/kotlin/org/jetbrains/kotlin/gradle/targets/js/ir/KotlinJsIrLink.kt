@@ -131,6 +131,16 @@ abstract class KotlinJsIrLink @Inject constructor(
             if (isWasmPlatform && modeProperty.get() == DEVELOPMENT) {
                 args.debuggerCustomFormatters = true
             }
+
+            if (propertiesProvider.useNewTranspilationPipeline) {
+                if (args.target != "es2015") {
+                    args.target = "es2015"
+                    if (args.moduleKind == null) {
+                        args.moduleKind = "umd"
+                    }
+                }
+                args.generatePolyfills = false
+            }
         }
     }
 

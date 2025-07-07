@@ -122,7 +122,14 @@ open class AbstractFirJsCodegenBoxTestBase(testGroupOutputDirPrefix: String) : A
 
 open class AbstractFirJsCodegenBoxTest : AbstractFirJsCodegenBoxTestBase(
     testGroupOutputDirPrefix = "codegen/firBox/"
-)
+) {
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        builder.defaultDirectives {
+            +JsEnvironmentConfigurationDirectives.USE_NEW_TRANSPILATION_PIPELINE
+        }
+    }
+}
 
 open class AbstractFirJsCodegenBoxWithInlinedFunInKlibTest : AbstractFirJsCodegenBoxTestBase(
     testGroupOutputDirPrefix = "codegen/firBoxWithInlinedFunInKlib"

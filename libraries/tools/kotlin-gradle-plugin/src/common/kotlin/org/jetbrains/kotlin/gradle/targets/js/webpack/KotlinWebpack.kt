@@ -17,25 +17,31 @@ import org.gradle.api.tasks.*
 import org.gradle.deployment.internal.Deployment
 import org.gradle.deployment.internal.DeploymentHandle
 import org.gradle.deployment.internal.DeploymentRegistry
+import org.gradle.internal.declarativedsl.parsing.parse
 import org.gradle.process.ExecOperations
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.build.report.metrics.BuildMetricsReporter
 import org.jetbrains.kotlin.build.report.metrics.BuildMetricsReporterImpl
 import org.jetbrains.kotlin.build.report.metrics.GradleBuildPerformanceMetric
 import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.report.UsesBuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
+import org.jetbrains.kotlin.gradle.targets.js.swc.KotlinSwcConfig
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWebpackRulesContainer
 import org.jetbrains.kotlin.gradle.targets.js.dsl.WebpackRulesDsl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.WebpackRulesDsl.Companion.webpackRulesContainer
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
+import org.jetbrains.kotlin.gradle.targets.js.swc.PlatformRestrictions
+import org.jetbrains.kotlin.gradle.targets.js.swc.SwcEnvTargets
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.gradle.utils.processes.ExecAsyncHandle
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.io.File
 import javax.inject.Inject
 
@@ -94,6 +100,20 @@ internal constructor(
 
     @Input
     var mode: Mode = Mode.DEVELOPMENT
+
+    @get:Input
+    abstract val esTarget: Property<String>
+
+    @get:Input
+    @get:Optional
+    abstract val moduleKind: Property<JsModuleKind>
+
+    @get:Input
+    abstract val useSwc: Property<Boolean>
+
+    @get:Input
+    @get:Optional
+    abstract val swcTargets: Property<SwcEnvTargets>
 
     @get:Internal
     internal abstract val getIsWasm: Property<Boolean>
@@ -300,7 +320,17 @@ internal constructor(
         devtool = devtool,
         sourceMaps = sourceMaps,
         resolveFromModulesFirst = resolveFromModulesFirst,
-        resolveLoadersFromKotlinToolingDir = getIsWasm.get()
+        resolveLoadersFromKotlinToolingDir = getIsWasm.get(),
+        swc = runIf(useSwc.getOrElse(false)) {
+            KotlinSwcConfig(
+                esTarget = esTarget.get(),
+                sourceMaps = sourceMaps,
+                parseMap = sourceMaps,
+                moduleKind = moduleKind.orNull?.kind,
+                coreJsVersion = versions.get().coreJs.version,
+                envTargets = swcTargets.orNull
+            )
+        }
     )
 
     private fun createRunner(): KotlinWebpackRunner {

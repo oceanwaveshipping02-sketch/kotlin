@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
+import org.jetbrains.kotlin.gradle.targets.js.swc.KotlinSwcConfig
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWebpackRulesContainer
 import org.jetbrains.kotlin.gradle.targets.js.dsl.WebpackRulesDsl
 import org.jetbrains.kotlin.gradle.targets.js.internal.appendConfigsFromDir
@@ -60,6 +61,7 @@ data class KotlinWebpackConfig(
     var progressReporter: Boolean = false,
     var resolveFromModulesFirst: Boolean = false,
     var resolveLoadersFromKotlinToolingDir: Boolean = false,
+    var swc: KotlinSwcConfig? = null,
 ) : WebpackRulesDsl {
 
     val entryInput: String?
@@ -80,6 +82,11 @@ data class KotlinWebpackConfig(
             it.add(
                 versions.kotlinWebHelpers
             )
+
+            if (swc != null) {
+                it.add(versions.swcCore)
+                it.add(versions.swcLoader)
+            }
 
             if (sourceMaps) {
                 it.add(
@@ -182,6 +189,7 @@ data class KotlinWebpackConfig(
 
             appendEntry()
             appendResolveModules()
+            appendBabel()
             appendSourceMaps()
             appendOptimization()
             appendDevServer()
@@ -235,6 +243,27 @@ data class KotlinWebpackConfig(
             appendLine("    $experiment: true,")
         }
         appendLine("}")
+    }
+
+    private fun Appendable.appendBabel() {
+        swc?.let {
+            //language=JavaScript 1.8
+            appendLine(
+                """
+                // source maps
+                config.module.rules.push({
+                        test: /\.m?js${'$'}/,
+                        use: {
+                          loader: "swc-loader",
+             """.trimIndent()
+            )
+            append("""          options: """)
+            with(it) { emitConfigJson("            ") }
+            appendLine("""
+                        },
+                });
+            """.trimIndent())
+        }
     }
 
     private fun Appendable.appendSourceMaps() {
