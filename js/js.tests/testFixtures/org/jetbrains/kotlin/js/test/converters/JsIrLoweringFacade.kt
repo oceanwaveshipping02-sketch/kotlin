@@ -179,8 +179,7 @@ class JsIrLoweringFacade(
             .filter { isEsModules || it.granularity != JsGenerationGranularity.PER_FILE }
             .toSet()
         val compilationOut = transformer.generateModule(loweredIr.allModules, translationModes, isEsModules)
-        return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut)
-            .dump(module)
+        return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut).dump(module)
     }
 
     private fun IrModuleFragment.resolveTestPaths() {
