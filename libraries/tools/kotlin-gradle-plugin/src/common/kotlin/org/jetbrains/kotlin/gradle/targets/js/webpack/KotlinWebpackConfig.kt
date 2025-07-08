@@ -189,7 +189,7 @@ data class KotlinWebpackConfig(
 
             appendEntry()
             appendResolveModules()
-            appendBabel()
+            appendSwc()
             appendSourceMaps()
             appendOptimization()
             appendDevServer()
@@ -245,7 +245,7 @@ data class KotlinWebpackConfig(
         appendLine("}")
     }
 
-    private fun Appendable.appendBabel() {
+    private fun Appendable.appendSwc() {
         swc?.let {
             //language=JavaScript 1.8
             appendLine(

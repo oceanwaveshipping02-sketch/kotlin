@@ -292,7 +292,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         this.esTarget.value(esTarget).finalizeValueOnRead()
         this.moduleKind.value(moduleKind).finalizeValueOnRead()
         this.useSwc.value(useNewTranspilationPipeline).finalizeValueOnRead()
-        this.swcTargets.value(target.envTargets).finalizeValueOnRead()
+        this.swcTargets.value(target._targetPlatforms).finalizeValueOnRead()
 
         this.esModules.convention(
             moduleKind

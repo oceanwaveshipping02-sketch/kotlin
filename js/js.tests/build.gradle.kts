@@ -314,13 +314,3 @@ val generateTypeScriptTests by parallel(
     }
         .map { generateTypeScriptTestFor(it.name) }
 )
-
-projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit5) {
-    workingDir = rootDir
-
-    useJsIrBoxTests(version = version, buildDir = layout.buildDirectory)
-    include("org/jetbrains/kotlin/incremental/*")
-    dependsOn(":dist")
-    forwardProperties()
-    useJUnitPlatform()
-}

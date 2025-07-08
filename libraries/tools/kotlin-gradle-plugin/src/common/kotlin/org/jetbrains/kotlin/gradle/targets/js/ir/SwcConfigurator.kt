@@ -69,12 +69,12 @@ class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetCon
             listOf(compilation)
         ) { task ->
             val inputFilesDirectory = linkTask.flatMap { it.destinationDirectory }
-            val envTargets = compilation.target.envTargets
+            val envTargets = compilation.target._targetPlatforms
             val outputDirectory = binary.distribution.distributionName.flatMap {
                 project.layout.buildDirectory.dir("kotlin-swc/${compilation.target.name}/$it")
             }
 
-            task.description = "transpile compiler output with Babel [${mode.name.toLowerCaseAsciiOnly()}]"
+            task.description = "transpile compiler output with Swc [${mode.name.toLowerCaseAsciiOnly()}]"
 
             task.versions.value(nodeJsRoot.versions).disallowChanges()
             task.inputFilesDirectory.value(inputFilesDirectory).disallowChanges()
