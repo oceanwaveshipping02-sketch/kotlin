@@ -8,11 +8,11 @@ package org.jetbrains.kotlin.gradle.targets.js.swc
 import com.google.gson.GsonBuilder
 import java.io.Serializable
 
-sealed interface SwcEnvTargets : Serializable {
+sealed interface TargetPlatformsDescription : Serializable {
     fun toJson(): String
 }
 
-data class PlatformRestrictions(
+class MinimalPlatformVersions internal constructor(
     var android: String? = null,
     var chrome: String? = null,
     var deno: String? = null,
@@ -26,12 +26,17 @@ data class PlatformRestrictions(
     var rhino: String? = null,
     var safari: String? = null,
     var samsung: String? = null
-) : Serializable, SwcEnvTargets {
+) : Serializable, TargetPlatformsDescription {
     override fun toJson(): String =
         GsonBuilder().create().toJson(this)
 }
 
 @JvmInline
-value class BrowserlistQuery(val value: String) : SwcEnvTargets, Serializable {
+internal value class BrowserListQuery(val value: String) : TargetPlatformsDescription, Serializable {
     override fun toJson(): String = "\"$value\""
 }
+
+fun minimalVersions(configuration: MinimalPlatformVersions.() -> Unit): TargetPlatformsDescription =
+    MinimalPlatformVersions().apply(configuration)
+
+fun browserListQuery(query: String): TargetPlatformsDescription = BrowserListQuery(query)

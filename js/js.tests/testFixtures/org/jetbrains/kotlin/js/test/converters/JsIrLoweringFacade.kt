@@ -196,7 +196,10 @@ class JsIrLoweringFacade(
         val moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)
 
         val generateDts = JsEnvironmentConfigurationDirectives.GENERATE_DTS in module.directives
-        val useNewTranspilationPipeline = JsEnvironmentConfigurationDirectives.USE_NEW_TRANSPILATION_PIPELINE in module.directives
+        val useNewTranspilationPipeline =
+            JsEnvironmentConfigurationDirectives.USE_NEW_TRANSPILATION_PIPELINE in module.directives &&
+                    JsEnvironmentConfigurationDirectives.ES6_MODE !in module.directives
+
         val dontSkipRegularMode = JsEnvironmentConfigurationDirectives.SKIP_REGULAR_MODE !in module.directives
 
         if (dontSkipRegularMode) {

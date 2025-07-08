@@ -14,7 +14,7 @@ data class KotlinSwcConfig(
     val sourceMaps: Boolean,
     val coreJsVersion: String,
     val moduleKind: String? = null,
-    val envTargets: SwcEnvTargets? = null,
+    val envTargets: TargetPlatformsDescription? = null,
     val parseMap: Boolean? = null,
     val isNodeJs: Boolean = true,
 ) : Serializable {

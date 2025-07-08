@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlatformTestRun
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsReportAggregatingTestRun
 import org.jetbrains.kotlin.gradle.targets.js.ir.*
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
-import org.jetbrains.kotlin.gradle.targets.js.swc.PlatformRestrictions
+import org.jetbrains.kotlin.gradle.targets.js.swc.TargetPlatformsDescription
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -230,23 +230,7 @@ interface KotlinJsTargetDsl :
      * Works only with
      */
     @ExperimentalDeclarativePlatformRestrictionDsl
-    var platforms: String
-
-    /**
-     * _This option is only relevant for JS targets._
-     * _Do not use in WasmJS targets._
-     *
-     * > Note: Declarative platform restriction is Experimental.
-     * > The option works only with the new transpilation pipeline (kotlin.js.new.transpilation.pipeline=true)
-     *
-     * > Note: Declarative platform restriction is Experimental.
-     * > Its API may be changed or dropped at any time.
-     *
-     * Introduce a declarative way to restrict platforms which Kotlin/JS should target
-     */
-    @ExperimentalDeclarativePlatformRestrictionDsl
-    fun platforms(body: Action<PlatformRestrictions>)
-
+    val targetPlatforms: Property<TargetPlatformsDescription>
 }
 
 /**

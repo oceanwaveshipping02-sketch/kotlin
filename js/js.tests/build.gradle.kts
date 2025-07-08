@@ -110,40 +110,28 @@ val testDataDir = project(":js:js.translator").projectDir.resolve("testData")
 val typescriptTestsDir = testDataDir.resolve("typescript-export")
 val jsTestsDir = typescriptTestsDir.resolve("js")
 
-val installTsDependencies by task<NpmTask> {
-    val packageLockFile = testDataDir.resolve("package-lock.json")
-    val nodeModules = testDataDir.resolve("node_modules")
-    inputs.file(testDataDir.resolve("package.json"))
-    inputs.file(packageLockFile)
-    outputs.upToDateWhen { nodeModules.exists() }
-
-    workingDir.set(testDataDir)
-    npmCommand.set(listOf("ci"))
-}
-
 fun generateTypeScriptTestFor(dir: String): TaskProvider<NpmTask> = tasks.register<NpmTask>("generate-ts-for-$dir") {
     val baseDir = jsTestsDir.resolve(dir)
     val mainTsFile = fileTree(baseDir).files.find { it.name.endsWith("__main.ts") } ?: return@register
     val mainJsFile = baseDir.resolve("${mainTsFile.nameWithoutExtension}.js")
 
-    workingDir.set(testDataDir)
+    workingDir.set(node.nodeProjectDir.file("./"))
 
     inputs.file(mainTsFile)
     outputs.file(mainJsFile)
     outputs.upToDateWhen { mainJsFile.exists() }
 
-    args.set(listOf("run", "generateTypeScriptTests", "--", "./typescript-export/js/$dir/tsconfig.json"))
+    args.set(listOf("run", "generateTypeScriptTests", "--", baseDir.resolve("tsconfig.json").path))
 }
 
-val generateTypeScriptTests by parallel(
-    beforeAll = installTsDependencies,
-    tasksToRun = jsTestsDir.listFiles { it: File ->
-        it.isDirectory &&
-                !it.path.endsWith("module-systems") &&
-                !it.path.endsWith("module-systems-in-exported-file")
-    }
-        .map { generateTypeScriptTestFor(it.name) }
-)
+fun Test.setupSwc() {
+    systemProperty(
+        "swc.path",
+        node.nodeProjectDir.file("node_modules/@swc/cli/bin/swc.js")
+            .map { it.asFile.absolutePath }
+            .get()
+    )
+}
 
 fun Test.setupNodeJs() {
     systemProperty(
@@ -153,10 +141,6 @@ fun Test.setupNodeJs() {
                 computeNodeExec(node, variantComputer.computeNodeBinDir(node.resolvedNodeDir, node.resolvedPlatform)).get()
             }
     )
-    systemProperty(
-        "swc.path",
-       "/Users/Artem.Kobzar/.asdf/installs/nodejs/22.16.0/lib/node_modules/@swc/cli/bin/swc.js"
-    )
 }
 
 fun Test.setUpJsBoxTests(tags: String?) {
@@ -164,6 +148,7 @@ fun Test.setUpJsBoxTests(tags: String?) {
         setupV8()
     }
 
+    setupSwc()
     setupNodeJs()
     dependsOn(npmInstall)
 
@@ -295,7 +280,6 @@ val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateJs
     dependsOn(":compiler:generateTestData")
 }
 
-
 val testJsFile = testDataDir.resolve("test.js")
 val packageJsonFile = testDataDir.resolve("package.json")
 val packageLockJsonFile = testDataDir.resolve("package-lock.json")
@@ -321,3 +305,22 @@ val npmInstall by tasks.getting(NpmTask::class) {
     npmCommand.set(listOf("ci"))
 }
 
+val generateTypeScriptTests by parallel(
+    beforeAll = npmInstall,
+    tasksToRun = jsTestsDir.listFiles { it: File ->
+        it.isDirectory &&
+                !it.path.endsWith("module-systems") &&
+                !it.path.endsWith("module-systems-in-exported-file")
+    }
+        .map { generateTypeScriptTestFor(it.name) }
+)
+
+projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit5) {
+    workingDir = rootDir
+
+    useJsIrBoxTests(version = version, buildDir = layout.buildDirectory)
+    include("org/jetbrains/kotlin/incremental/*")
+    dependsOn(":dist")
+    forwardProperties()
+    useJUnitPlatform()
+}

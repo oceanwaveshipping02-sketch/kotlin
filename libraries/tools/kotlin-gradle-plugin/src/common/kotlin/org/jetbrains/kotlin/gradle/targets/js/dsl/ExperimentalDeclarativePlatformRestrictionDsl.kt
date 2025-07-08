@@ -21,5 +21,5 @@ import kotlin.annotation.AnnotationTarget.PROPERTY
  * @see KotlinJsNodeDsl.passProcessArgvToMainFunction
  */
 @RequiresOptIn(level = WARNING)
-@Target(FUNCTION, PROPERTY)
+@Target(PROPERTY)
 annotation class ExperimentalDeclarativePlatformRestrictionDsl

@@ -17,7 +17,6 @@ import org.gradle.api.tasks.*
 import org.gradle.deployment.internal.Deployment
 import org.gradle.deployment.internal.DeploymentHandle
 import org.gradle.deployment.internal.DeploymentRegistry
-import org.gradle.internal.declarativedsl.parsing.parse
 import org.gradle.process.ExecOperations
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.build.report.metrics.BuildMetricsReporter
@@ -36,8 +35,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.WebpackRulesDsl.Companion.webp
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
-import org.jetbrains.kotlin.gradle.targets.js.swc.PlatformRestrictions
-import org.jetbrains.kotlin.gradle.targets.js.swc.SwcEnvTargets
+import org.jetbrains.kotlin.gradle.targets.js.swc.TargetPlatformsDescription
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.gradle.utils.processes.ExecAsyncHandle
@@ -113,7 +111,7 @@ internal constructor(
 
     @get:Input
     @get:Optional
-    abstract val swcTargets: Property<SwcEnvTargets>
+    abstract val swcTargets: Property<TargetPlatformsDescription>
 
     @get:Internal
     internal abstract val getIsWasm: Property<Boolean>
