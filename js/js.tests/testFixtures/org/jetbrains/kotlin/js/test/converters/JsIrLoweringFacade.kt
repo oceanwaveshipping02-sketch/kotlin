@@ -218,7 +218,6 @@ class JsIrLoweringFacade(
 
                 if (useNewTranspilationPipeline) {
                     val inputDir = outputFile.parentFile
-                    outputFile.copyTo(File(inputDir, "pre-swc-${outputFile.name}"))
                     SwcRunner.exec(inputDir, inputDir, moduleKind)
                 }
             }

@@ -16,5 +16,5 @@
     "env": {
         "targets": {}
     },
-    "sourceMaps": false
+    "sourceMaps": true
 }

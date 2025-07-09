@@ -75,6 +75,9 @@ abstract class KotlinJsIrLink @Inject constructor(
     @get:Input
     val outputGranularity: KotlinJsIrOutputGranularity = propertiesProvider.jsIrOutputGranularity
 
+    @get:Input
+    internal val useNewTranspilationPipeline: Boolean = propertiesProvider.useNewTranspilationPipeline
+
     // Incremental stuff of link task is inside compiler
     @get:Internal
     override val taskBuildCacheableOutputDirectory: DirectoryProperty
@@ -132,7 +135,7 @@ abstract class KotlinJsIrLink @Inject constructor(
                 args.debuggerCustomFormatters = true
             }
 
-            if (propertiesProvider.useNewTranspilationPipeline) {
+            if (useNewTranspilationPipeline) {
                 if (args.target != "es2015") {
                     args.target = "es2015"
                     if (args.moduleKind == null) {

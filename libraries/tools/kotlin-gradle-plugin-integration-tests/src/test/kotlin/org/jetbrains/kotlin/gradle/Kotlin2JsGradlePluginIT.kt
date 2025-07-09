@@ -7,9 +7,12 @@ package org.jetbrains.kotlin.gradle
 import com.google.gson.Gson
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
+import org.gradle.kotlin.dsl.the
+import org.gradle.kotlin.dsl.withType
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDeclarativePlatformRestrictionDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.JsPlatformDisambiguator
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.LockCopyTask.Companion.UPGRADE
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
 import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
+import org.jetbrains.kotlin.gradle.targets.js.swc.browserslist
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.replaceText
 import org.jetbrains.kotlin.test.TestMetadata
@@ -1573,6 +1577,39 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
         project("kotlin-js-nodejs-project", gradleVersion) {
             build("nodeTest") {
                 assertOutputDoesNotContain("0 passing")
+            }
+        }
+    }
+
+    @DisplayName("build.gradle.kts is failing if targetPlatforms is used without new transpilation pipeline")
+    @GradleTest
+    fun testTargetPlatformsIsFailingWithoutNewTranspilationPipeline(gradleVersion: GradleVersion) {
+        project("kmp-js-nodejs-project", gradleVersion) {
+            buildScriptInjection {
+                kotlinMultiplatform.js {
+                    @OptIn(ExperimentalDeclarativePlatformRestrictionDsl::class)
+                    targetPlatforms.set(browserslist("last 2 node major versions"))
+                }
+            }
+            buildAndFail("jsNodeDevelopmentRun") {
+                assertOutputContains("The platform API is unavailable without the new transpilation pipeline, please put `kotlin.js.new.transpilation.pipeline=true` in the `gradle.properties` file")
+            }
+        }
+    }
+
+    @DisplayName("build.gradle.kts is finished successfully if targetPlatforms is used with new transpilation pipeline")
+    @GradleTest
+    fun testTargetPlatformsIsFinishedSuccessfullyWithNewTranspilationPipeline(gradleVersion: GradleVersion) {
+        project("kmp-js-nodejs-project", gradleVersion) {
+            gradleProperties.appendText("kotlin.js.new.transpilation.pipeline=true")
+            buildScriptInjection {
+                kotlinMultiplatform.js {
+                    @OptIn(ExperimentalDeclarativePlatformRestrictionDsl::class)
+                    targetPlatforms.set(browserslist("last 2 node major versions"))
+                }
+            }
+            build("jsNodeDevelopmentRun") {
+                assertOutputContains("ACCEPTED")
             }
         }
     }

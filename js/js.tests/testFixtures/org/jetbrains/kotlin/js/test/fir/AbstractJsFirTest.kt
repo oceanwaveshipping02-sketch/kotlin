@@ -88,11 +88,6 @@ open class AbstractFirJsTest(
                     +JsEnvironmentConfigurationDirectives.GENERATE_INLINE_ANONYMOUS_FUNCTIONS
                 }
             }
-
-            // TODO: Remove it after the first CI run
-            defaultDirectives {
-                +JsEnvironmentConfigurationDirectives.USE_NEW_TRANSPILATION_PIPELINE
-            }
         }
     }
 }

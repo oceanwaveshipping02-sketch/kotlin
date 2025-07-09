@@ -11,6 +11,5 @@
     "env": {
         "targets": {}
     },
-    "sourceMaps": false,
-    "exclude": ["pre-swc-*"]
+    "sourceMaps": true
 }

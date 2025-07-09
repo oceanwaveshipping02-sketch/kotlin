@@ -27,8 +27,6 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.wasm.npm.WasmNpmResolverPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmResolverPlugin
-import org.jetbrains.kotlin.gradle.targets.js.swc.BrowserListQuery
-import org.jetbrains.kotlin.gradle.targets.js.swc.MinimalPlatformVersions
 import org.jetbrains.kotlin.gradle.targets.js.swc.TargetPlatformsDescription
 import org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask
 import org.jetbrains.kotlin.gradle.targets.wasm.binaryen.BinaryenExec

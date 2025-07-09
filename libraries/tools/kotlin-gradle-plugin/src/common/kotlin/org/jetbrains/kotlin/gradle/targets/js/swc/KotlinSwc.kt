@@ -67,6 +67,8 @@ internal constructor(
     @get:Internal
     abstract val inputFilesDirectory: DirectoryProperty
 
+
+    private val npmProject = compilation.npmProject
     private val npmProjectDir by project.provider { compilation.npmProject.dir }
 
     @get:Internal
@@ -130,8 +132,8 @@ internal constructor(
             add(inputFilesDirectory.get().asFile.absolutePath)
         }
 
-        execSpec.workingDir(compilation.npmProject.dir)
-        execSpec.executable(compilation.npmProject.nodeExecutable)
+        execSpec.workingDir(npmProject.dir)
+        execSpec.executable(npmProject.nodeExecutable)
 
         val modules = NpmProjectModules(npmToolingEnvDir.getFile())
 
