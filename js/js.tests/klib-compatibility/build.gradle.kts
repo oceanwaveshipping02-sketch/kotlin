@@ -2,7 +2,19 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 
 plugins {
     kotlin("jvm")
+    alias(libs.plugins.gradle.node)
     id("d8-configuration")
+}
+
+val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
+
+node {
+    download.set(true)
+    version.set(nodejsVersion)
+    nodeProjectDir.set(layout.buildDirectory.dir("node"))
+    if (cacheRedirectorEnabled) {
+        distBaseUrl.set("https://cache-redirector.jetbrains.com/nodejs.org/dist")
+    }
 }
 
 dependencies {
@@ -14,25 +26,34 @@ dependencies {
     testImplementation(testFixtures(project(":js:js.tests")))
 }
 
-val customCompilerVersion = findProperty("kotlin.internal.js.test.compat.customCompilerVersion") as String
-val customCompilerArtifacts: Configuration by configurations.creating
+/* Configurations for custom compiler versions. */
+val customCompilerArtifacts1920: Configuration by configurations.creating
+// Step 1: Add a new configuration here.
 
+/* Dependencies for custom compiler versions. */
 dependencies {
-    customCompilerArtifacts("org.jetbrains.kotlin:kotlin-compiler-embeddable:$customCompilerVersion")
-    customCompilerArtifacts("org.jetbrains.kotlin:kotlin-stdlib-js:$customCompilerVersion") {
+    /* 1.9.20 */
+    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
+    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.20") {
         attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
     }
-    customCompilerArtifacts("org.jetbrains.kotlin:kotlin-test-js:$customCompilerVersion") {
+    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-test-js:1.9.20") {
         attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
     }
+
+    // Step 2: Add the dependencies for the new configuration here.
 }
 
-val customCompilerArtifactsDir: Provider<Directory> = layout.buildDirectory.dir("customCompiler$customCompilerVersion")
+/* Directories with custom compiler artifacts. */
+val customCompilerArtifactsDir1920: Provider<Directory> = layout.buildDirectory.dir("customCompiler_1920")
+// Step 3: Add a new directory here.
 
-val downloadCustomCompilerArtifacts: TaskProvider<Sync> by tasks.registering(Sync::class) {
-    from(customCompilerArtifacts)
-    into(customCompilerArtifactsDir)
+/* Download tasks for custom compiler artifacts. */
+val downloadCustomCompilerArtifacts1920: TaskProvider<Sync> by tasks.registering(Sync::class) {
+    from(customCompilerArtifacts1920)
+    into(customCompilerArtifactsDir1920)
 }
+// Step 4: Add a new download task here.
 
 optInToExperimentalCompilerApi()
 
@@ -51,16 +72,36 @@ fun Test.setUpJsBoxTests() {
         setupV8()
     }
     dependsOn(":dist")
-
+    systemProperty("kotlin.js.test.root.out.dir", "${node.nodeProjectDir.get().asFile}/")
+    useJUnitPlatform { includeTags("custom-first-phase") }
     workingDir = rootDir
 }
 
-projectTest(jUnitMode = JUnitMode.JUnit5) {
-    dependsOn(downloadCustomCompilerArtifacts)
-    systemProperty("kotlin.internal.js.test.compat.customCompilerArtifactsDir", customCompilerArtifactsDir.get().asFile.absolutePath)
+fun Test.setUpCustomCompiler(
+    customCompilerVersion: String,
+    downloadTask: TaskProvider<Sync>,
+    artifactsDir: Provider<Directory>,
+) {
+    dependsOn(downloadTask)
+    systemProperty("kotlin.internal.js.test.compat.customCompilerArtifactsDir", artifactsDir.get().asFile.absolutePath)
     systemProperty("kotlin.internal.js.test.compat.customCompilerVersion", customCompilerVersion)
-
-    setUpJsBoxTests()
-    useJUnitPlatform()
 }
 
+/* Custom-first-phase test tasks for different compiler versions. */
+projectTest("testCustomFirstPhase1920", jUnitMode = JUnitMode.JUnit5) {
+    setUpJsBoxTests()
+    setUpCustomCompiler("1.9.20", downloadCustomCompilerArtifacts1920, customCompilerArtifactsDir1920)
+}
+// Step 5: Add a new test task here.
+
+@Suppress("unused")
+val test by tasks.getting(Test::class) {
+    // The default test task does not resolve the necessary dependencies and does not set up the environment.
+    // Making it disabled to avoid running it accidentally.
+    enabled = false
+}
+
+@Suppress("unused")
+val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateJsKlibCompatibilityTestsKt") {
+    dependsOn(":compiler:generateTestData")
+}
