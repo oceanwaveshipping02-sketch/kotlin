@@ -6,30 +6,12 @@
 package org.jetbrains.kotlin.gradle.targets.js.swc
 
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
 sealed interface TargetPlatformsDescription : Serializable {
     fun toJson(): String
 }
-
-/**
- *     #[serde(default, rename = "chrome-android")]
- *     pub chrome_android: T,
- *     #[serde(default, rename = "firefox-android")]
- *     pub firerfox_android: T,
- *     #[serde(default, rename = "opera-android")]
- *     pub opera_android: T,
- *     #[serde(default, rename = "react-native")]
- *     pub react_native: T,
- *     #[serde(default)]
- *     pub and_chr: T,
- *     #[serde(default)]
- *     pub and_ff: T,
- *     #[serde(default)]
- *     pub op_mob: T,
- *     #[serde(default)]
- *     pub opera_mobile: T,
- */
 
 class MinimalPlatformVersions internal constructor(
     var android: String? = null,
@@ -50,7 +32,11 @@ class MinimalPlatformVersions internal constructor(
     var oculus: String? = null,
     var quest: String? = null,
     var phantom: String? = null,
-
+    @SerializedName("react-native") var reactNative: String? = null,
+    @SerializedName("opera-mobile") var operaMobile: String? = null,
+    @SerializedName("opera-android") var operaAndroid: String? = null,
+    @SerializedName("chrome-android") var chromeAndroid: String? = null,
+    @SerializedName("firefox-android") var firefoxAndroid: String? = null,
 ) : Serializable, TargetPlatformsDescription {
     override fun toJson(): String =
         GsonBuilder().create().toJson(this)
@@ -61,7 +47,14 @@ internal value class BrowsersListQuery(val queries: Array<out String>) : TargetP
     override fun toJson(): String = "[${queries.joinToString(", ") { "\"$it\"" }}]"
 }
 
+/**
+ * Restrict platforms (browsers, operating systems, runtimes) by listing them with the minimal versions to support
+ */
 fun minimalVersions(configuration: MinimalPlatformVersions.() -> Unit): TargetPlatformsDescription =
     MinimalPlatformVersions().apply(configuration)
 
+/**
+ * Restrict platforms by a declarative [browserslist](https://browsersl.ist/) query
+ * You can test the query before use here: https://browsersl.ist/, and it will show you the platforms that will be used
+ */
 fun browserslist(vararg queries: String): TargetPlatformsDescription = BrowsersListQuery(queries)
