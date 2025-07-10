@@ -44,7 +44,8 @@ class MinimalPlatformVersions internal constructor(
 
 @JvmInline
 internal value class BrowsersListQuery(val queries: Array<out String>) : TargetPlatformsDescription, Serializable {
-    override fun toJson(): String = "[${queries.joinToString(", ") { "\"$it\"" }}]"
+    override fun toJson(): String =
+        GsonBuilder().create().toJson(queries)
 }
 
 /**

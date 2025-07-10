@@ -16,7 +16,7 @@ object SwcRunner {
     private val es5Config = "js/js.tests/test/org/jetbrains/kotlin/js/test/tools/es5.swcrc"
     private val es5WithEsmConfig = "js/js.tests/test/org/jetbrains/kotlin/js/test/tools/es5.esm.swcrc"
 
-    fun exec(inputDirectory: File, outputDirectory: File, moduleKind: ModuleKind) {
+    fun exec(inputDirectory: File, moduleKind: ModuleKind) {
         val processBuilder = ProcessBuilder(
             nodePath,
             swcPath,

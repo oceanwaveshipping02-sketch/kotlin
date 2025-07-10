@@ -197,7 +197,7 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
-    val USE_NEW_TRANSPILATION_PIPELINE by directive(
+    val DELEGATE_JS_TRANSPILATION by directive(
         description = "Enables new transpilation pipeline, where the compiler produces only latest ECMAScript version and the lowering to older versions is on the swc tool",
         applicability = DirectiveApplicability.Global
     )

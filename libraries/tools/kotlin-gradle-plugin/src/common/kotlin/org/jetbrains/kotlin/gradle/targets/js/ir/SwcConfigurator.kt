@@ -34,7 +34,7 @@ class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetCon
     )
 
     override fun setupBuild(compilation: KotlinJsIrCompilation) {
-        if (isWasm || !propertiesProvider.useNewTranspilationPipeline) return
+        if (isWasm || !propertiesProvider.delegateTranspilationToExternalTool) return
 
         compilation.binaries
             .withType<Executable>()

@@ -220,14 +220,11 @@ interface KotlinJsTargetDsl :
      * _Do not use in WasmJS targets._
      *
      * > Note: Declarative platform restriction is Experimental.
-     * > The option works only with the new transpilation pipeline (kotlin.js.new.transpilation.pipeline=true)
-     *
-     * > Note: Declarative platform restriction is Experimental.
      * > Its API may be changed or dropped at any time.
+     * > The option works only with the delegated transpilation turned on (kotlin.js.delegated.transpilation=true)
      *
      * Introduce a declarative way to restrict platforms which Kotlin/JS should target
      *
-     * Works only with
      */
     @ExperimentalDeclarativePlatformRestrictionDsl
     val targetPlatforms: Property<TargetPlatformsDescription>

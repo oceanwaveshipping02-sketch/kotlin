@@ -59,7 +59,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
     override fun setupBuild(compilation: KotlinJsIrCompilation) {
         val target = compilation.target
         val project = target.project
-        val useNewTranspilationPipeline = propertiesProvider.useNewTranspilationPipeline
+        val delegateTranspilationToExternalTool = propertiesProvider.delegateTranspilationToExternalTool
 
         val processResourcesTask = project.tasks.named(compilation.processResourcesTaskName)
 
@@ -72,7 +72,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
             )
         )
 
-        if (useNewTranspilationPipeline) {
+        if (delegateTranspilationToExternalTool) {
             // Add @swc/helpers and core-js dependency to consume polyfills
             compilation.dependencies {
                 with(nodeJsRoot.versions) {
@@ -123,7 +123,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
                         configurationActions = webpackTaskConfigurations,
                         defaultArchivesName = archivesName,
                         npmToolingDir = npmToolingDir,
-                        useNewTranspilationPipeline = useNewTranspilationPipeline,
+                        delegateTranspilationToExternalTool = delegateTranspilationToExternalTool,
                     )
                 }
 
@@ -232,7 +232,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
                         configurationActions = runTaskConfigurations,
                         defaultArchivesName = archivesName,
                         npmToolingDir = npmToolingDir,
-                        useNewTranspilationPipeline = propertiesProvider.useNewTranspilationPipeline,
+                        delegateTranspilationToExternalTool = propertiesProvider.delegateTranspilationToExternalTool,
                     )
                 }
             }
@@ -250,7 +250,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         configurationActions: DomainObjectSet<Action<KotlinWebpack>>,
         defaultArchivesName: Property<String>,
         npmToolingDir: DirectoryProperty,
-        useNewTranspilationPipeline: Boolean
+        delegateTranspilationToExternalTool: Boolean
     ) {
         val target = binary.target
 
@@ -291,7 +291,7 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         this.entryModuleName.set(entryModuleName)
         this.esTarget.value(esTarget).finalizeValueOnRead()
         this.moduleKind.value(moduleKind).finalizeValueOnRead()
-        this.useSwc.value(useNewTranspilationPipeline).finalizeValueOnRead()
+        this.useSwc.value(delegateTranspilationToExternalTool).finalizeValueOnRead()
         this.swcTargets.value(target._targetPlatforms).finalizeValueOnRead()
 
         this.esModules.convention(

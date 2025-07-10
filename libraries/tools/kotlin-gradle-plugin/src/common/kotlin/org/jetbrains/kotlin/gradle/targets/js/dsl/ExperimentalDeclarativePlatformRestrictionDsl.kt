@@ -6,19 +6,15 @@
 package org.jetbrains.kotlin.gradle.targets.js.dsl
 
 import kotlin.RequiresOptIn.Level.WARNING
-import kotlin.annotation.AnnotationTarget.FUNCTION
 import kotlin.annotation.AnnotationTarget.PROPERTY
+import  org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 
 /**
- * API marker for defining the source of arguments for the main function.
+ * API marker for using the declarative target platforms DSL.
  *
- * Passing arguments to the main function is Experimental.
  * It may be dropped or changed at any time.
  *
- * See https://kotl.in/kotlin-js-pass-arguments-to-main-function
- *
- * @see KotlinJsTargetDsl.passAsArgumentToMainFunction
- * @see KotlinJsNodeDsl.passProcessArgvToMainFunction
+ * @see KotlinJsIrTarget.targetPlatforms
  */
 @RequiresOptIn(level = WARNING)
 @Target(PROPERTY)

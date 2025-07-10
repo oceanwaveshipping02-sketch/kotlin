@@ -370,8 +370,8 @@ constructor(
     @ExperimentalDeclarativePlatformRestrictionDsl
     override val targetPlatforms: Property<TargetPlatformsDescription>
         get() {
-            if (!propertiesProvider.useNewTranspilationPipeline)
-                throw GradleException("The platform API is unavailable without the new transpilation pipeline, please put `kotlin.js.new.transpilation.pipeline=true` in the `gradle.properties` file")
+            if (!propertiesProvider.delegateTranspilationToExternalTool)
+                throw GradleException("The platform API is unavailable without the new transpilation pipeline, please put `kotlin.js.delegated.transpilation=true` in the `gradle.properties` file")
             return _targetPlatforms
         }
 

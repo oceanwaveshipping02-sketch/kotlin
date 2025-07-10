@@ -257,7 +257,7 @@ data class KotlinWebpackConfig(
                           loader: "swc-loader",
              """.trimIndent()
             )
-            append("""          options: """)
+            append("          options: ")
             with(it) { emitConfigJson("            ") }
             appendLine("""
                         },
