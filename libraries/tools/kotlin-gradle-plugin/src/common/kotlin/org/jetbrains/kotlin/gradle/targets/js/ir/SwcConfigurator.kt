@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin.Comp
 import org.jetbrains.kotlin.gradle.utils.withType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
-class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetConfigurator<KotlinSwc, KotlinSwc> {
+internal class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetConfigurator<KotlinSwc, KotlinSwc> {
     private val project = subTarget.project
     private val propertiesProvider = PropertiesProvider(project)
 

@@ -123,7 +123,6 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
                         configurationActions = webpackTaskConfigurations,
                         defaultArchivesName = archivesName,
                         npmToolingDir = npmToolingDir,
-                        delegateTranspilationToExternalTool = delegateTranspilationToExternalTool,
                     )
                 }
 
@@ -232,7 +231,6 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
                         configurationActions = runTaskConfigurations,
                         defaultArchivesName = archivesName,
                         npmToolingDir = npmToolingDir,
-                        delegateTranspilationToExternalTool = propertiesProvider.delegateTranspilationToExternalTool,
                     )
                 }
             }
@@ -250,7 +248,6 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         configurationActions: DomainObjectSet<Action<KotlinWebpack>>,
         defaultArchivesName: Property<String>,
         npmToolingDir: DirectoryProperty,
-        delegateTranspilationToExternalTool: Boolean
     ) {
         val target = binary.target
 
@@ -291,7 +288,6 @@ class WebpackConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTarge
         this.entryModuleName.set(entryModuleName)
         this.esTarget.value(esTarget).finalizeValueOnRead()
         this.moduleKind.value(moduleKind).finalizeValueOnRead()
-        this.useSwc.value(delegateTranspilationToExternalTool).finalizeValueOnRead()
         this.swcTargets.value(target._targetPlatforms).finalizeValueOnRead()
 
         this.esModules.convention(

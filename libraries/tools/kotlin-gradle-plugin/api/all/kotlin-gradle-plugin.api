@@ -2423,6 +2423,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion : or
 public final class org/jetbrains/kotlin/gradle/targets/js/NpmVersions : java/io/Serializable {
 	public fun <init> ()V
 	public final fun getAllDependencies ()Ljava/util/List;
+	public final fun getCoreJs ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getCssLoader ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getKarma ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getKarmaChromeLauncher ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
@@ -2442,6 +2443,10 @@ public final class org/jetbrains/kotlin/gradle/targets/js/NpmVersions : java/io/
 	public final fun getSourceMapLoader ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getSourceMapSupport ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getStyleLoader ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
+	public final fun getSwcCli ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
+	public final fun getSwcCore ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
+	public final fun getSwcHelpers ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
+	public final fun getSwcLoader ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getToStringLoader ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getTypescript ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
 	public final fun getWebpack ()Lorg/jetbrains/kotlin/gradle/targets/js/NpmPackageVersion;
@@ -2587,6 +2592,9 @@ public final class org/jetbrains/kotlin/gradle/targets/js/dsl/Distribution$Compa
 public abstract interface annotation class org/jetbrains/kotlin/gradle/targets/js/dsl/ExperimentalDceDsl : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class org/jetbrains/kotlin/gradle/targets/js/dsl/ExperimentalDeclarativePlatformRestrictionDsl : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class org/jetbrains/kotlin/gradle/targets/js/dsl/ExperimentalDistributionDsl : java/lang/annotation/Annotation {
 }
 
@@ -2653,6 +2661,7 @@ public abstract interface class org/jetbrains/kotlin/gradle/targets/js/dsl/Kotli
 	public abstract fun getCompilations ()Lorg/gradle/api/NamedDomainObjectContainer;
 	public abstract fun getModuleName ()Ljava/lang/String;
 	public abstract fun getOutputModuleName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTargetPlatforms ()Lorg/gradle/api/provider/Property;
 	public abstract fun getTestRuns ()Lorg/gradle/api/NamedDomainObjectContainer;
 	public abstract fun passAsArgumentToMainFunction (Ljava/lang/String;)V
 	public abstract fun produceExecutable ()V
@@ -3162,6 +3171,7 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/ir/KotlinJsIrTarget
 	public fun getModuleName ()Ljava/lang/String;
 	public fun getNodejs ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsNodeDsl;
 	public fun getSubTargets ()Lorg/gradle/api/NamedDomainObjectContainer;
+	public fun getTargetPlatforms ()Lorg/gradle/api/provider/Property;
 	public fun getTestRuns ()Lorg/gradle/api/NamedDomainObjectContainer;
 	public fun getWasmTargetType ()Lorg/jetbrains/kotlin/gradle/targets/js/KotlinWasmTargetType;
 	public fun isBrowserConfigured ()Z
@@ -4273,6 +4283,107 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/subtargets/KotlinNo
 	public fun <init> ()V
 }
 
+public abstract class org/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwc : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependencies {
+	public final fun doExecute ()V
+	public final fun getBin ()Ljava/lang/String;
+	public final fun getCompilation ()Lorg/jetbrains/kotlin/gradle/targets/js/ir/KotlinJsIrCompilation;
+	public final fun getConfig ()Lorg/gradle/api/provider/Property;
+	public fun getConfigFile ()Lorg/gradle/api/provider/Provider;
+	public abstract fun getInputFilesDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public final fun getMode ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;
+	public abstract fun getOutputDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public fun getRequiredNpmDependencies ()Ljava/util/Set;
+	public final fun setBin (Ljava/lang/String;)V
+	public final fun setMode (Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;)V
+}
+
+public final class org/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig : java/io/Serializable {
+	public fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;Ljava/lang/Boolean;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;Ljava/lang/Boolean;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Z
+	public final fun copy (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;Ljava/lang/Boolean;Z)Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;
+	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;Ljava/lang/Boolean;ZILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;
+	public final fun emitConfigJson (Ljava/lang/Appendable;Ljava/lang/String;)V
+	public static synthetic fun emitConfigJson$default (Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;Ljava/lang/Appendable;Ljava/lang/String;ILjava/lang/Object;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoreJsVersion ()Ljava/lang/String;
+	public final fun getEnvTargets ()Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;
+	public final fun getEsTarget ()Ljava/lang/String;
+	public final fun getModuleKind ()Ljava/lang/String;
+	public final fun getParseMap ()Ljava/lang/Boolean;
+	public final fun getSourceMaps ()Z
+	public fun hashCode ()I
+	public final fun isNodeJs ()Z
+	public final fun save (Ljava/io/File;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/kotlin/gradle/targets/js/swc/MinimalPlatformVersions : java/io/Serializable, org/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription {
+	public fun <init> ()V
+	public final fun getAndroid ()Ljava/lang/String;
+	public final fun getBun ()Ljava/lang/String;
+	public final fun getChrome ()Ljava/lang/String;
+	public final fun getChromeAndroid ()Ljava/lang/String;
+	public final fun getDeno ()Ljava/lang/String;
+	public final fun getEdge ()Ljava/lang/String;
+	public final fun getElectron ()Ljava/lang/String;
+	public final fun getFirefox ()Ljava/lang/String;
+	public final fun getFirefoxAndroid ()Ljava/lang/String;
+	public final fun getHermes ()Ljava/lang/String;
+	public final fun getIe ()Ljava/lang/String;
+	public final fun getIos ()Ljava/lang/String;
+	public final fun getNode ()Ljava/lang/String;
+	public final fun getOculus ()Ljava/lang/String;
+	public final fun getOpera ()Ljava/lang/String;
+	public final fun getOperaAndroid ()Ljava/lang/String;
+	public final fun getOperaMobile ()Ljava/lang/String;
+	public final fun getPhantom ()Ljava/lang/String;
+	public final fun getQuest ()Ljava/lang/String;
+	public final fun getReactNative ()Ljava/lang/String;
+	public final fun getRhino ()Ljava/lang/String;
+	public final fun getSafari ()Ljava/lang/String;
+	public final fun getSamsung ()Ljava/lang/String;
+	public final fun setAndroid (Ljava/lang/String;)V
+	public final fun setBun (Ljava/lang/String;)V
+	public final fun setChrome (Ljava/lang/String;)V
+	public final fun setChromeAndroid (Ljava/lang/String;)V
+	public final fun setDeno (Ljava/lang/String;)V
+	public final fun setEdge (Ljava/lang/String;)V
+	public final fun setElectron (Ljava/lang/String;)V
+	public final fun setFirefox (Ljava/lang/String;)V
+	public final fun setFirefoxAndroid (Ljava/lang/String;)V
+	public final fun setHermes (Ljava/lang/String;)V
+	public final fun setIe (Ljava/lang/String;)V
+	public final fun setIos (Ljava/lang/String;)V
+	public final fun setNode (Ljava/lang/String;)V
+	public final fun setOculus (Ljava/lang/String;)V
+	public final fun setOpera (Ljava/lang/String;)V
+	public final fun setOperaAndroid (Ljava/lang/String;)V
+	public final fun setOperaMobile (Ljava/lang/String;)V
+	public final fun setPhantom (Ljava/lang/String;)V
+	public final fun setQuest (Ljava/lang/String;)V
+	public final fun setReactNative (Ljava/lang/String;)V
+	public final fun setRhino (Ljava/lang/String;)V
+	public final fun setSafari (Ljava/lang/String;)V
+	public final fun setSamsung (Ljava/lang/String;)V
+	public fun toJson ()Ljava/lang/String;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription : java/io/Serializable {
+	public abstract fun toJson ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescriptionKt {
+	public static final fun browserslist ([Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;
+	public static final fun minimalVersions (Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/kotlin/gradle/targets/js/swc/TargetPlatformsDescription;
+}
+
 public abstract class org/jetbrains/kotlin/gradle/targets/js/testing/KotlinJsTest : org/jetbrains/kotlin/gradle/tasks/KotlinTest, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependencies {
 	public fun <init> (Lorg/jetbrains/kotlin/gradle/targets/js/ir/KotlinJsIrCompilation;)V
 	public synthetic fun createTestExecutionSpec ()Lorg/gradle/api/internal/tasks/testing/TestExecutionSpec;
@@ -4478,6 +4589,7 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpa
 	public final fun getEntry ()Lorg/gradle/api/provider/Provider;
 	public abstract fun getEntryModuleName ()Lorg/gradle/api/provider/Property;
 	public abstract fun getEsModules ()Lorg/gradle/api/provider/Property;
+	public abstract fun getEsTarget ()Lorg/gradle/api/provider/Property;
 	public fun getExecHandleFactory ()Ljava/lang/Void;
 	public final fun getGenerateConfigOnly ()Z
 	public final fun getInputFiles ()Lorg/gradle/api/file/FileTree;
@@ -4485,6 +4597,7 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpa
 	public final fun getMainOutputFile ()Lorg/gradle/api/provider/Provider;
 	public abstract fun getMainOutputFileName ()Lorg/gradle/api/provider/Property;
 	public final fun getMode ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;
+	public abstract fun getModuleKind ()Lorg/gradle/api/provider/Property;
 	public final fun getNodeArgs ()Ljava/util/List;
 	public final fun getNpmProjectDir ()Lorg/gradle/api/provider/Provider;
 	public final fun getOutput ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;
@@ -4494,6 +4607,7 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpa
 	public fun getRequiredNpmDependencies ()Ljava/util/Set;
 	public fun getRules ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;
 	public final fun getSourceMaps ()Z
+	public abstract fun getSwcTargets ()Lorg/gradle/api/provider/Property;
 	public final fun getWatchOptions ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;
 	public fun rules (Lorg/gradle/api/Action;)V
 	public fun scssSupport (Lorg/gradle/api/Action;)V
@@ -4513,8 +4627,8 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpa
 }
 
 public final class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig : org/jetbrains/kotlin/gradle/targets/js/dsl/WebpackRulesDsl {
-	public fun <init> (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZ)V
-	public synthetic fun <init> (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZLorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;)V
+	public synthetic fun <init> (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZLorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun appendTo (Ljava/lang/Appendable;)V
 	public final fun component1 ()Lorg/gradle/api/provider/Provider;
 	public final fun component10 ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;
@@ -4529,6 +4643,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackC
 	public final fun component19 ()Z
 	public final fun component2 ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;
 	public final fun component20 ()Z
+	public final fun component21 ()Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;
 	public final fun component3 ()Ljava/io/File;
 	public final fun component4 ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;
 	public final fun component5 ()Ljava/io/File;
@@ -4536,8 +4651,8 @@ public final class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackC
 	public final fun component7 ()Ljava/io/File;
 	public final fun component8 ()Ljava/io/File;
 	public final fun component9 ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;
-	public final fun copy (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZ)Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;
-	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;
+	public final fun copy (Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZLorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;)Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;
+	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;Lorg/gradle/api/provider/Provider;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Mode;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackOutput;Ljava/io/File;Ljava/lang/String;Ljava/io/File;Ljava/io/File;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$DevServer;Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;Ljava/util/Set;Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;Ljava/lang/String;ZLorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$Optimization;ZZZZZLorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig;
 	public fun cssSupport (Lorg/gradle/api/Action;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getConfigDirectory ()Ljava/io/File;
@@ -4562,6 +4677,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackC
 	public fun getRules ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWebpackRulesContainer;
 	public final fun getShowProgress ()Z
 	public final fun getSourceMaps ()Z
+	public final fun getSwc ()Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;
 	public final fun getWatchOptions ()Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;
 	public fun hashCode ()I
 	public fun rules (Lorg/gradle/api/Action;)V
@@ -4584,6 +4700,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackC
 	public final fun setResolveLoadersFromKotlinToolingDir (Z)V
 	public final fun setShowProgress (Z)V
 	public final fun setSourceMaps (Z)V
+	public final fun setSwc (Lorg/jetbrains/kotlin/gradle/targets/js/swc/KotlinSwcConfig;)V
 	public final fun setWatchOptions (Lorg/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpackConfig$WatchOptions;)V
 	public fun toString ()Ljava/lang/String;
 }

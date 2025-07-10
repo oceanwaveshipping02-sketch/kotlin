@@ -107,9 +107,6 @@ internal constructor(
     abstract val moduleKind: Property<JsModuleKind>
 
     @get:Input
-    abstract val useSwc: Property<Boolean>
-
-    @get:Input
     @get:Optional
     abstract val swcTargets: Property<TargetPlatformsDescription>
 
@@ -319,14 +316,14 @@ internal constructor(
         sourceMaps = sourceMaps,
         resolveFromModulesFirst = resolveFromModulesFirst,
         resolveLoadersFromKotlinToolingDir = getIsWasm.get(),
-        swc = runIf(useSwc.getOrElse(false)) {
+        swc = swcTargets.orNull?.let { targets ->
             KotlinSwcConfig(
                 esTarget = esTarget.get(),
                 sourceMaps = sourceMaps,
                 parseMap = sourceMaps,
                 moduleKind = moduleKind.orNull?.kind,
                 coreJsVersion = versions.get().coreJs.version,
-                envTargets = swcTargets.orNull
+                envTargets = targets
             )
         }
     )

@@ -91,7 +91,7 @@ internal constructor(
         }
     }
 
-    companion object {
+    internal companion object {
         internal const val SWC_TASK_NAME = "swc"
     }
 }
