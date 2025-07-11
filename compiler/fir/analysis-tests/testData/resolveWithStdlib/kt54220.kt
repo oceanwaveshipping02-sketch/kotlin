@@ -1,5 +1,7 @@
-// RUN_PIPELINE_TILL: FRONTEND
-const val c = <!CONST_VAL_WITH_NON_CONST_INITIALIZER!>1u + 2u<!>
+// RUN_PIPELINE_TILL: BACKEND
+// IGNORE_BACKEND_K1: ANY
+// Evaluation of operations on unsigned constants isn't implementented on K
+const val c = 1u + 2u
 
 fun box() = when {
     c != 3u -> "fail"

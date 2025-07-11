@@ -1,7 +1,6 @@
-// FIR_DIFFERENCE
-// The difference is okay: K1 and K2 report a bit differently
 // IGNORE_FIR_DIAGNOSTICS
-// IGNORE_BACKEND_K1: JS_IR
+// IGNORE_BACKEND_K1: ANY
+// Evaluation of operations on unsigned constants isn't implementented on K1
 
 @file:Suppress(
     "DEPRECATED_IDENTITY_EQUALS",
@@ -87,15 +86,15 @@ fun testLogicOperations() {
 
 fun testEq() {
     js("{ var a = ${1 == 1}; }")
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1U == 1U<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>UONE == 1U<!>}; }"<!>)
+    js("{ var a = ${1U == 1U}; }")
+    js("{ var a = ${UONE == 1U}; }")
     js("{ var a = ${"FOO" == STR}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>TRUE == null<!>}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>STR == null<!>}; }")
 
     js("{ var a = ${1 != 1}; }")
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1U != 1U<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>UONE != 1U<!>}; }"<!>)
+    js("{ var a = ${1U != 1U}; }")
+    js("{ var a = ${UONE != 1U}; }")
     js("{ var a = ${"FOO" != STR}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>TRUE != null<!>}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>STR != null<!>}; }")
