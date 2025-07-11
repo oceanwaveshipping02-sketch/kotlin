@@ -7,10 +7,9 @@ package org.jetbrains.kotlin.gradle.targets.js.ir
 
 import org.gradle.api.Action
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
-import org.jetbrains.kotlin.gradle.targets.js.swc.KotlinSwc
+import org.jetbrains.kotlin.gradle.targets.js.swc.KotlinTranspileWithSwc
 import org.jetbrains.kotlin.gradle.targets.js.swc.KotlinSwcConfig
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinNodeJsIr.Companion.SWC_TASK_NAME
 import org.jetbrains.kotlin.gradle.targets.js.webTargetVariant
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsRootExtension
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin.Comp
 import org.jetbrains.kotlin.gradle.utils.withType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
-internal class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetConfigurator<KotlinSwc, KotlinSwc> {
+internal class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : SubTargetConfigurator<KotlinTranspileWithSwc, KotlinTranspileWithSwc> {
     private val project = subTarget.project
     private val propertiesProvider = PropertiesProvider(project)
 
@@ -64,7 +63,7 @@ internal class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : Sub
             else -> error("Unsupported binary type: ${binary::class.simpleName}")
         }
 
-        val swcTask = subTarget.registerSubTargetTask<KotlinSwc>(
+        val swcTask = subTarget.registerSubTargetTask<KotlinTranspileWithSwc>(
             subTarget.disambiguateCamelCased(name, SWC_TASK_NAME),
             listOf(compilation)
         ) { task ->
@@ -108,12 +107,16 @@ internal class SwcConfigurator(private val subTarget: KotlinJsIrSubTarget) : Sub
         }
     }
 
-    override fun configureBuild(body: Action<KotlinSwc>) {
+    override fun configureBuild(body: Action<KotlinTranspileWithSwc>) {
     }
 
     override fun setupRun(compilation: KotlinJsIrCompilation) {
     }
 
-    override fun configureRun(body: Action<KotlinSwc>) {
+    override fun configureRun(body: Action<KotlinTranspileWithSwc>) {
+    }
+
+    internal companion object {
+        internal const val SWC_TASK_NAME = "transpileWithSwc"
     }
 }

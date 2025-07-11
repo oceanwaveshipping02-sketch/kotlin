@@ -90,8 +90,4 @@ internal constructor(
             test.testFramework = KotlinWasmNode(test, objects, providers)
         }
     }
-
-    internal companion object {
-        internal const val SWC_TASK_NAME = "swc"
-    }
 }

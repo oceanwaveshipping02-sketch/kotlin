@@ -10,7 +10,10 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.RegisteringDomainObjectDelegateProviderWithAction
 import org.gradle.kotlin.dsl.registering
 
-fun Project.parallel(
+fun Project.parallel(tasksToRun: List<TaskProvider<*>>, beforeAll: TaskProvider<*>) = parallelImpl(tasksToRun, beforeAll)
+fun Project.parallel(tasksToRun: List<TaskProvider<*>>, beforeAll: Task) = parallelImpl(tasksToRun, beforeAll)
+
+private fun Project.parallelImpl(
     tasksToRun: List<TaskProvider<*>>,
     beforeAll: Any? = null,
 ): RegisteringDomainObjectDelegateProviderWithAction<out TaskContainer, Task> {

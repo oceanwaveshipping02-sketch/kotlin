@@ -88,6 +88,7 @@ fun encodeURIComponent(s: String): String {
             .replace("%28", "(")
             .replace("%29", ")")
             .replace("%7E", "~")
+            .replace("%2F", "/")
     } catch (e: UnsupportedEncodingException) {
         s
     }
