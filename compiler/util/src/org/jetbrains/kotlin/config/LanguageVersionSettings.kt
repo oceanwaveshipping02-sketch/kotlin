@@ -458,6 +458,7 @@ enum class LanguageFeature(
     CheckOptInOnPureEnumEntries(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-359"),
     ForbidExposingPackagePrivateInInternal(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-271"),
     CheckPackageInfoNullnessAnnotations(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77729"),
+    ForbidBridgesConflictingWithInheritedMethodsInJvmCode(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-13712"),
 
     // 2.5
 
