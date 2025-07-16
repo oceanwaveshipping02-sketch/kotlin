@@ -10532,7 +10532,7 @@ public inline fun UShortArray.sumOf(selector: (UShort) -> Double): Double {
 @ExperimentalUnsignedTypes
 @kotlin.internal.InlineOnly
 public inline fun UIntArray.sumOf(selector: (UInt) -> Int): Int {
-    var sum: Int = 0.toInt()
+    var sum: Int = 0
     for (element in this) {
         sum += selector(element)
     }
@@ -10548,7 +10548,7 @@ public inline fun UIntArray.sumOf(selector: (UInt) -> Int): Int {
 @ExperimentalUnsignedTypes
 @kotlin.internal.InlineOnly
 public inline fun ULongArray.sumOf(selector: (ULong) -> Int): Int {
-    var sum: Int = 0.toInt()
+    var sum: Int = 0
     for (element in this) {
         sum += selector(element)
     }
@@ -10564,7 +10564,7 @@ public inline fun ULongArray.sumOf(selector: (ULong) -> Int): Int {
 @ExperimentalUnsignedTypes
 @kotlin.internal.InlineOnly
 public inline fun UByteArray.sumOf(selector: (UByte) -> Int): Int {
-    var sum: Int = 0.toInt()
+    var sum: Int = 0
     for (element in this) {
         sum += selector(element)
     }
@@ -10580,7 +10580,7 @@ public inline fun UByteArray.sumOf(selector: (UByte) -> Int): Int {
 @ExperimentalUnsignedTypes
 @kotlin.internal.InlineOnly
 public inline fun UShortArray.sumOf(selector: (UShort) -> Int): Int {
-    var sum: Int = 0.toInt()
+    var sum: Int = 0
     for (element in this) {
         sum += selector(element)
     }
