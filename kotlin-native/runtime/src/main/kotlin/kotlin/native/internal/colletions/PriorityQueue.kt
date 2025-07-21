@@ -1,4 +1,9 @@
-package kotlin.native.internal
+/*
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package kotlin.native.internal.colletions
 
 internal class PriorityQueue<T>(initialCapacity: Int, private val comparator: Comparator<T>) {
 
@@ -16,8 +21,6 @@ internal class PriorityQueue<T>(initialCapacity: Int, private val comparator: Co
 
     private val elements = ArrayList<T>(initialCapacity)
 
-    private var modCount: Int = 0
-
     val unorderedElements: List<T>
         get() = elements.toList()
 
@@ -31,7 +34,6 @@ internal class PriorityQueue<T>(initialCapacity: Int, private val comparator: Co
     fun containsAll(elements: Collection<T>): Boolean = this.elements.containsAll(elements)
 
     fun add(element: T): Boolean {
-        modCount++
         elements.add(element)
         siftUp(elements.size - 1)
         return true
@@ -53,7 +55,6 @@ internal class PriorityQueue<T>(initialCapacity: Int, private val comparator: Co
     fun removeFirst(): T = removeFirstOrNull() ?: throw NoSuchElementException("PriorityQueue is empty")
 
     fun clear() {
-        modCount++
         elements.clear()
     }
 
@@ -65,7 +66,6 @@ internal class PriorityQueue<T>(initialCapacity: Int, private val comparator: Co
     }
 
     private fun removeAt(index: Int): T {
-        modCount++
         val removedElement = elements[index]
         if (index == elements.size - 1) {
             elements.removeAt(index)

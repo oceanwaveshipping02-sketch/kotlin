@@ -3,17 +3,19 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package test.native.internal
+package test.native.internal.collections
 
-import kotlin.native.internal.PriorityQueue
-import kotlin.test.*
+import kotlin.native.internal.colletions.PriorityQueue
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class PriorityQueueTest {
     val testData = listOf(108, 42, 37, 4, 8, 15, 16, 23, 42)
 
     @Test
     fun addAndFirstElement() {
-        val queue = PriorityQueue.minimal<Int>()
+        val queue = PriorityQueue.Companion.minimal<Int>()
         queue.add(testData.first())
         assertFalse(queue.isEmpty())
         assertEquals(1, queue.size)
@@ -22,23 +24,23 @@ class PriorityQueueTest {
 
     @Test
     fun minHeap() {
-        val queue = PriorityQueue.minimal<Int>()
+        val queue = PriorityQueue.Companion.minimal<Int>()
         testData.forEach { queue.add(it) }
 
         assertEquals(
-                testData.sorted(),
-                generateSequence { queue.removeFirstOrNull() }.toList()
+            testData.sorted(),
+            generateSequence { queue.removeFirstOrNull() }.toList()
         )
     }
 
     @Test
     fun maxHeap() {
-        val queue = PriorityQueue.maximal<Int>()
+        val queue = PriorityQueue.Companion.maximal<Int>()
         testData.forEach { queue.add(it) }
 
         assertEquals(
-                testData.sortedDescending(),
-                generateSequence { queue.removeFirstOrNull() }.toList()
+            testData.sortedDescending(),
+            generateSequence { queue.removeFirstOrNull() }.toList()
         )
     }
 }
