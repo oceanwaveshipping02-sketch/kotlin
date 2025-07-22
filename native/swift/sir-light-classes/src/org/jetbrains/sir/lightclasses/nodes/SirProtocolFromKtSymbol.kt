@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.sir.providers.source.KotlinSource
 import org.jetbrains.kotlin.sir.providers.source.kaSymbolOrNull
 import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeModule
 import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeSupportModule
+import org.jetbrains.kotlin.sir.providers.utils.allRequiredOptIns
 import org.jetbrains.kotlin.sir.providers.utils.containingModule
 import org.jetbrains.kotlin.sir.providers.utils.updateImport
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -144,6 +145,7 @@ internal class SirMarkerProtocolFromKtSymbol(
     override val bridges: List<SirBridge> by lazyWithSessions {
         listOfNotNull(sirSession.generateTypeBridge(
             ktSymbol.classId?.asSingleFqName()?.pathSegments()?.map { it.toString() } ?: emptyList(),
+            kotlinOptIns = ktSymbol.allRequiredOptIns,
             swiftFqName = swiftFqName,
             swiftSymbolName = objcClassSymbolName,
         ))

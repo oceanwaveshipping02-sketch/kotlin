@@ -7,15 +7,20 @@ package org.jetbrains.kotlin.sir.providers.impl.BridgeProvider
 
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.providers.*
 import org.jetbrains.kotlin.sir.providers.source.kaSymbolOrNull
+import org.jetbrains.kotlin.sir.providers.utils.allRequiredOptIns
 import org.jetbrains.kotlin.sir.util.isNever
 import org.jetbrains.kotlin.sir.util.isVoid
 import org.jetbrains.kotlin.sir.util.name
 import org.jetbrains.kotlin.sir.util.swiftIdentifier
 
 private const val exportAnnotationFqName = "kotlin.native.internal.ExportedBridge"
+private const val optinAnnotationFqName = "kotlin.OptIn"
 private const val cinterop = "kotlinx.cinterop.*"
 private const val convertBlockPtrToKotlinFunction = "kotlinx.cinterop.internal.convertBlockPtrToKotlinFunction"
 private const val stdintHeader = "stdint.h"
@@ -24,6 +29,7 @@ private const val foundationHeader = "Foundation/Foundation.h"
 public class SirBridgeProviderImpl(private val session: SirSession, private val typeNamer: SirTypeNamer) : SirBridgeProvider {
     override fun generateTypeBridge(
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         swiftFqName: String,
         swiftSymbolName: String,
     ): SirTypeBindingBridge? {
@@ -31,7 +37,8 @@ public class SirBridgeProviderImpl(private val session: SirSession, private val 
         val kotlinFqName = kotlinFqName.joinToString(".")
         return SirTypeBindingBridge(
             name = swiftFqName,
-            kotlinFileAnnotation = "$annotationName($kotlinFqName::class, \"$swiftSymbolName\")"
+            kotlinFileAnnotation = "$annotationName($kotlinFqName::class, \"$swiftSymbolName\")",
+            kotlinOptIns = kotlinOptIns.map { it.asFqNameString()}
         )
     }
 
@@ -40,6 +47,7 @@ public class SirBridgeProviderImpl(private val session: SirSession, private val 
         explicitParameters: List<SirParameter>,
         returnType: SirType,
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         selfParameter: SirParameter?,
         extensionReceiverParameter: SirParameter?,
         errorParameter: SirParameter?
@@ -60,6 +68,7 @@ public class SirBridgeProviderImpl(private val session: SirSession, private val 
             parameters = explicitParameters.mapIndexed { index, value -> bridgeParameter(value, index) },
             returnType = bridgeType(returnType),
             kotlinFqName = kotlinFqName,
+            kotlinOptIns = kotlinOptIns,
             selfParameter = selfParameter?.let { bridgeParameter(it, 0) },
             extensionReceiverParameter = extensionReceiverParameter?.let { bridgeParameter(it, 0) },
             errorParameter = errorParameter?.let {
@@ -112,6 +121,7 @@ private class BridgeFunctionDescriptor(
     override val parameters: List<BridgeParameter>,
     override val returnType: Bridge,
     override val kotlinFqName: List<String>,
+    val kotlinOptIns: List<ClassId>,
     override val selfParameter: BridgeParameter?,
     override val extensionReceiverParameter: BridgeParameter?,
     override val errorParameter: BridgeParameter?,
@@ -193,6 +203,9 @@ private fun BridgeFunctionDescriptor.createKotlinBridge(
     buildCallSite: BridgeFunctionDescriptor.() -> String,
 ) = buildList {
     add("@${exportAnnotationFqName.substringAfterLast('.')}(\"${cBridgeName}\")")
+
+    kotlinOptIns.annotation?.let(::add)
+
     add(
         "public fun $kotlinBridgeName(${
             allParameters.filter { it.isRenderable }.joinToString { "${it.name.kotlinIdentifier}: ${it.bridge.kotlinType.repr}" }
@@ -263,3 +276,8 @@ private fun BridgeFunctionDescriptor.additionalImports(): List<String> {
 
 private val BridgeFunctionDescriptor.safeImportName: String
     get() = kotlinFqName.run { if (size <= 1) single() else joinToString("_") { it.replace("_", "__") } }
+
+private val List<ClassId>.annotation: String?
+    get() = this.takeIf { it.isNotEmpty() }
+        ?.joinToString { "${it.asFqNameString() }::class" }
+        ?.let { "@${optinAnnotationFqName.substringAfterLast('.')}($it)" }

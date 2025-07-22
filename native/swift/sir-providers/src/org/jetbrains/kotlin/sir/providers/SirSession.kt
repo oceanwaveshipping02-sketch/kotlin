@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.providers.impl.BridgeProvider.BridgeFunctionProxy
@@ -105,6 +106,7 @@ public interface SirSession :
         explicitParameters: List<SirParameter>,
         returnType: SirType,
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         selfParameter: SirParameter?,
         extensionReceiverParameter: SirParameter?,
         errorParameter: SirParameter?
@@ -114,6 +116,7 @@ public interface SirSession :
             explicitParameters,
             returnType,
             kotlinFqName,
+            kotlinOptIns,
             selfParameter,
             extensionReceiverParameter,
             errorParameter
@@ -122,10 +125,11 @@ public interface SirSession :
 
     override fun generateTypeBridge(
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         swiftFqName: String,
         swiftSymbolName: String,
     ): SirTypeBindingBridge? = with(bridgeProvider) {
-        generateTypeBridge(kotlinFqName, swiftFqName, swiftSymbolName)
+        generateTypeBridge(kotlinFqName, kotlinOptIns, swiftFqName, swiftSymbolName)
     }
 }
 
@@ -331,6 +335,7 @@ public interface SirBridgeProvider {
         explicitParameters: List<SirParameter>,
         returnType: SirType,
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         selfParameter: SirParameter?,
         extensionReceiverParameter: SirParameter?,
         errorParameter: SirParameter?
@@ -338,6 +343,7 @@ public interface SirBridgeProvider {
 
     public fun generateTypeBridge(
         kotlinFqName: List<String>,
+        kotlinOptIns: List<ClassId>,
         swiftFqName: String,
         swiftSymbolName: String,
     ): SirTypeBindingBridge?

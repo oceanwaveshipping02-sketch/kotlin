@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.impl.BridgeProvider.BridgeFunctionProxy
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
 import org.jetbrains.kotlin.sir.providers.source.kaSymbolOrNull
+import org.jetbrains.kotlin.sir.providers.utils.allRequiredOptIns
 import org.jetbrains.kotlin.sir.providers.utils.throwsAnnotation
 import org.jetbrains.kotlin.sir.providers.utils.updateImports
 import org.jetbrains.kotlin.sir.providers.withSessions
@@ -174,6 +175,7 @@ internal abstract class SirAbstractGetter(
             explicitParameters = emptyList(),
             returnType = variable.type,
             kotlinFqName = fqName,
+            kotlinOptIns = variable.kaSymbolOrNull<KaVariableSymbol>()?.allRequiredOptIns ?: emptyList(),
             selfParameter = (variable.parent !is SirModule && variable.isInstance).ifTrue {
                 SirParameter("", "self", selfType ?: error("Only a member can have a self parameter"))
             },
@@ -255,6 +257,7 @@ internal abstract class SirAbstractSetter(
             explicitParameters = listOf(SirParameter(parameterName = parameterName, type = variable.type)),
             returnType = SirNominalType(SirSwiftModule.void),
             kotlinFqName = fqName,
+            kotlinOptIns = variable.kaSymbolOrNull<KaVariableSymbol>()?.allRequiredOptIns ?: emptyList(),
             selfParameter = (parent !is SirModule && variable.isInstance).ifTrue {
                 SirParameter("", "self", selfType ?: error("Only a member can have a self parameter"))
             },

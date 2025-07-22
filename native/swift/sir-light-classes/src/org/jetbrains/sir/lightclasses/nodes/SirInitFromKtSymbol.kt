@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.sir.providers.impl.BridgeProvider.BridgeFunctionProx
 import org.jetbrains.kotlin.sir.providers.source.InnerInitSource
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
 import org.jetbrains.kotlin.sir.providers.source.kaSymbolOrNull
+import org.jetbrains.kotlin.sir.providers.utils.allRequiredOptIns
 import org.jetbrains.kotlin.sir.providers.utils.isAbstract
 import org.jetbrains.kotlin.sir.providers.utils.throwsAnnotation
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
@@ -163,6 +164,7 @@ internal class SirInitFromKtSymbol(
             explicitParameters = emptyList(),
             returnType = obj.type,
             kotlinFqName = fqName,
+            kotlinOptIns = ktSymbol.allRequiredOptIns,
             selfParameter = null,
             extensionReceiverParameter = null,
             errorParameter = null,
@@ -185,6 +187,7 @@ internal class SirInitFromKtSymbol(
             explicitParameters = listOf(obj) + parameters,
             returnType = returnType,
             kotlinFqName = fqName,
+            kotlinOptIns = ktSymbol.allRequiredOptIns,
             selfParameter = null,
             extensionReceiverParameter = null,
             errorParameter = errorType.takeIf { it != SirType.never }?.let {

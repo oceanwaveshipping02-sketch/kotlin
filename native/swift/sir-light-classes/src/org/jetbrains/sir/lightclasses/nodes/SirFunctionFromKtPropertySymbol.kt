@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.sir.SirVisibility
 import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.impl.BridgeProvider.BridgeFunctionProxy
 import org.jetbrains.kotlin.sir.providers.source.KotlinPropertyAccessorOrigin
+import org.jetbrains.kotlin.sir.providers.utils.allRequiredOptIns
 import org.jetbrains.kotlin.sir.providers.utils.throwsAnnotation
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.sir.lightclasses.SirFromKtSymbol
@@ -122,6 +123,7 @@ internal class SirFunctionFromKtPropertySymbol(
             explicitParameters = listOfNotNull(extensionReceiverParameter) + parameters,
             returnType = returnType,
             kotlinFqName = fqName,
+            kotlinOptIns = ktSymbol.allRequiredOptIns,
             selfParameter = (parent !is SirModule && isInstance).ifTrue {
                 SirParameter("", "self", selfType ?: error("Only a member can have a self parameter"))
             },
