@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.lower.ES6_BOX_PARAMETER
+import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.isPromisifiedWrapperFakeOverride
 import org.jetbrains.kotlin.ir.backend.js.lower.isBoxParameter
 import org.jetbrains.kotlin.ir.backend.js.lower.isEs6ConstructorReplacement
 import org.jetbrains.kotlin.ir.backend.js.utils.*
@@ -77,7 +78,7 @@ class ExportModelGenerator(val context: JsIrBackendContext, val generateNamespac
             is Exportability.Prohibited -> ErrorDeclaration(exportability.reason)
             is Exportability.Allowed -> {
                 val parent = function.parent
-                val realOverrideTarget = function.realOverrideTarget
+                val realOverrideTarget = function.realOverrideTargetOrNull
                 ExportedFunction(
                     function.getExportedIdentifier(),
                     returnType = exportType(function.returnType, function),
@@ -91,7 +92,7 @@ class ExportModelGenerator(val context: JsIrBackendContext, val generateNamespac
                         .memoryOptimizedMap {
                             exportParameter(
                                 it,
-                                it.hasDefaultValue || realOverrideTarget.parameters[it.indexInParameters].hasDefaultValue
+                                it.hasDefaultValue || realOverrideTarget?.parameters?.get(it.indexInParameters)?.hasDefaultValue == true
                             )
                         }
                 )
@@ -797,9 +798,9 @@ private fun shouldDeclarationBeExported(
         val overriddenNonEmpty = source.overriddenSymbols.isNotEmpty()
 
         if (overriddenNonEmpty) {
-            return source.isOverriddenExported(context) ||
-                    (source as? IrSimpleFunction)?.isMethodOfAny() == true // Handle names for special functions
+            return (source as? IrSimpleFunction)?.isMethodOfAny() == true // Handle names for special functions
                     || source.isAllowedFakeOverriddenDeclaration(context)
+                    || source.isOverriddenExported(context)
         }
     }
 
@@ -814,6 +815,7 @@ private fun shouldDeclarationBeExported(
 }
 
 fun IrOverridableDeclaration<*>.isAllowedFakeOverriddenDeclaration(context: JsIrBackendContext): Boolean {
+    if (isPromisifiedWrapperFakeOverride) return true
     if (isOverriddenEnumProperty(context)) return true
 
     val firstExportedRealOverride = runIf(isFakeOverride) {
