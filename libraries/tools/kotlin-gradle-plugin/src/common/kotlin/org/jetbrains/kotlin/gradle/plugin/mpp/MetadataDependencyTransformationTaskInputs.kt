@@ -8,7 +8,6 @@ import org.gradle.api.tasks.*
 import org.gradle.util.GradleVersion
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal.projectStructureMetadataResolvedConfiguration
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
@@ -68,7 +67,7 @@ internal class MetadataDependencyTransformationTaskInputs(
         kotlinSourceSet.internal.compilations
             .filter { compilation ->
                 if (compilation is KotlinNativeCompilation) {
-                    compilation.crossCompilationOnCurrentHostSupported.getOrThrow()
+                    compilation.crossCompilationSupported.get()
                 } else {
                     true
                 }
