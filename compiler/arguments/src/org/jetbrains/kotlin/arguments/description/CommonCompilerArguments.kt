@@ -334,7 +334,9 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         valueDescription = "<dir>".asReleaseDependent()
         valueType = StringType.defaultNull
 
-        stubLifecycle()
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v1_7_0,
+        )
     }
 
 
