@@ -46,6 +46,7 @@ interface NpmApiExecution<out T : PackageManagerEnvironment> : Serializable {
         dir: Provider<File>,
         description: String,
         args: List<String>,
+        isOffline: Boolean = false,
     )
 
     companion object {

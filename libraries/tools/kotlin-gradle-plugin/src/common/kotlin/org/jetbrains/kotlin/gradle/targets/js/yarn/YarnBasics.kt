@@ -71,7 +71,7 @@ abstract class YarnBasics internal constructor(
         dir: Provider<File>,
         description: String,
         args: List<String>,
-        isOffline: Boolean = false,
+        isOffline: Boolean,
     ) {
         val progressLogger = objects.newBuildOpLogger()
         execWithProgress(progressLogger, description, execOps) { exec ->
@@ -80,7 +80,7 @@ abstract class YarnBasics internal constructor(
                     if (logger.isDebugEnabled) "--verbose" else ""
                 )
                 .plus(
-                    if (isOffline) add("--offline") else ""
+                    if (isOffline) "--offline" else ""
                 )
                 .plus(
                     if (environment.ignoreScripts) "--ignore-scripts" else ""
