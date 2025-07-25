@@ -64,7 +64,7 @@ abstract class YarnBasics internal constructor(
         )
     }
 
-    override fun packageManagerExec(
+    fun packageManagerExec(
         logger: Logger,
         nodeJs: NodeJsEnvironment,
         environment: YarnEnvironment,
