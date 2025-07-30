@@ -642,15 +642,15 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.8        1.9..2.0           2.1..2.3    2.4..2.5
+        //            1.0..1.9        2.0                2.1..2.3    2.4..2.5
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
         @JvmField
-        val FIRST_API_SUPPORTED = KOTLIN_1_9
+        val FIRST_API_SUPPORTED = KOTLIN_2_0
 
         @JvmField
-        val FIRST_SUPPORTED = KOTLIN_1_9
+        val FIRST_SUPPORTED = KOTLIN_2_0
 
         @JvmField
         val FIRST_NON_DEPRECATED = KOTLIN_2_1
