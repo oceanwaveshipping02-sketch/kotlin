@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.utils.errors.withKaModuleEntry
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
@@ -54,7 +53,6 @@ import org.jetbrains.kotlin.resolve.sam.createSamConstructorFunction
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DescriptorWithContainerSource
 import org.jetbrains.kotlin.util.ImplementationStatus
-import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -267,34 +265,23 @@ internal class KaFe10SymbolRelationProvider(
                 .mapNotNull { it.toKtClassifierSymbol(analysisContext) as? KaNamedClassSymbol }
         }
 
-    override fun KaFunctionSymbol.hasConflictingSignatureWith(other: KaFunctionSymbol): Boolean = withValidityAssertion {
-        val thisContainingModule = containingModule
-        val otherContainingModule = other.containingModule
-        if (thisContainingModule != otherContainingModule) {
-            errorWithAttachment(
-                "Expected symbols to be from the same module"
-            ) {
-                withKaModuleEntry("This declaration module", thisContainingModule)
-                withKaModuleEntry("Other declaration module", otherContainingModule)
-            }
-        }
+    override fun KaFunctionSymbol.hasConflictingSignatureWith(other: KaFunctionSymbol, targetPlatform: TargetPlatform): Boolean =
+        withValidityAssertion {
+            val thisDescriptor = getDescriptor() ?: return false
+            val otherDescriptor = other.getDescriptor() ?: return false
 
-        val thisDescriptor = getDescriptor() ?: return false
-        val otherDescriptor = other.getDescriptor() ?: return false
-
-        val targetPlatform = thisContainingModule.targetPlatform
-        val typeSpecificityComparator = when {
-            targetPlatform.isJvm() -> JvmTypeSpecificityComparatorDelegate(
-                ClassicTypeSystemContextForCS(
-                    analysisContext.builtIns,
-                    analysisContext.kotlinTypeRefiner
+            val typeSpecificityComparator = when {
+                targetPlatform.isJvm() -> JvmTypeSpecificityComparatorDelegate(
+                    ClassicTypeSystemContextForCS(
+                        analysisContext.builtIns,
+                        analysisContext.kotlinTypeRefiner
+                    )
                 )
-            )
-            else -> TypeSpecificityComparator.NONE
-        }
+                else -> TypeSpecificityComparator.NONE
+            }
 
-        !OverloadChecker(typeSpecificityComparator).isOverloadable(thisDescriptor, otherDescriptor)
-    }
+            !OverloadChecker(typeSpecificityComparator).isOverloadable(thisDescriptor, otherDescriptor)
+        }
 }
 
 internal fun computeContainingSymbolOrSelf(symbol: KaSymbol, analysisSession: KaSession): KaSymbol = with(analysisSession) {

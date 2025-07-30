@@ -26,7 +26,7 @@ abstract class AbstractHasConflictingSignatureWithTest : AbstractAnalysisApiBase
                 val currentSymbol = currentDeclaration.symbol as KaFunctionSymbol
                 val otherSymbol = otherDeclaration.symbol as KaFunctionSymbol
 
-                val hasConflictingSignature = currentSymbol.hasConflictingSignatureWith(otherSymbol)
+                val hasConflictingSignature = currentSymbol.hasConflictingSignatureWith(otherSymbol, mainModule.ktModule.targetPlatform)
 
                 buildString {
                     appendLine("ARE_CONFLICTING: $hasConflictingSignature")

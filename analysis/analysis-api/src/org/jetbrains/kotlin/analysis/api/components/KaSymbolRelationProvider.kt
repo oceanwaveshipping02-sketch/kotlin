@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.util.ImplementationStatus
 
 @SubclassOptInRequired(KaImplementationDetail::class)
@@ -215,7 +216,7 @@ public interface KaSymbolRelationProvider : KaSessionComponent {
     public val KaNamedClassSymbol.sealedClassInheritors: List<KaNamedClassSymbol>
 
     /**
-     * Returns whether [this] declaration has a conflicting signature with [other].
+     * Returns whether [this] declaration has a conflicting signature with [other] based on platform-specific checks from [targetPlatform].
      *
      * Note that it doesn't consider function names or their visibility, only their signatures.
      * In other words, it calculates whether two functions would conflict with each other when named equally and positioned in the same scope.
@@ -239,12 +240,9 @@ public interface KaSymbolRelationProvider : KaSessionComponent {
      * ```
      *
      * These two functions `foo` and `bar` have signatures, which are conflicting on every platform.
-     *
-     * Both declarations must be from the same module; otherwise, an exception is thrown.
-     * It's required to properly handle various platform-specific signature checks.
      */
     @KaIdeApi
-    public fun KaFunctionSymbol.hasConflictingSignatureWith(other: KaFunctionSymbol): Boolean
+    public fun KaFunctionSymbol.hasConflictingSignatureWith(other: KaFunctionSymbol, targetPlatform: TargetPlatform): Boolean
 }
 
 /**
