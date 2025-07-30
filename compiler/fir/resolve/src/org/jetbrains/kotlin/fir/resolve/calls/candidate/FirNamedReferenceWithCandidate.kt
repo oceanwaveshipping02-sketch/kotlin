@@ -46,10 +46,15 @@ class FirPropertyWithExplicitBackingFieldResolvedNamedReference(
     override val name: Name,
     override val resolvedSymbol: FirBasedSymbol<*>,
     val hasVisibleBackingField: Boolean,
+    override var isContextSensitiveResolved: Boolean = false
 ) : FirResolvedNamedReference() {
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {}
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirPropertyWithExplicitBackingFieldResolvedNamedReference {
         return this
+    }
+
+    override fun replaceIsContextSensitiveResolved(newIsContextSensitiveResolved: Boolean) {
+        isContextSensitiveResolved = newIsContextSensitiveResolved
     }
 }

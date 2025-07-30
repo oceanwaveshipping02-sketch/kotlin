@@ -1089,6 +1089,7 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(namedReference)
 
         +referencedSymbol("resolvedSymbol", firBasedSymbolType.withArgs(TypeRef.Star))
+        +field("isContextSensitiveResolved", boolean, withReplace = true)
     }
 
     val resolvedCallableReference: Element by element(Reference) {
