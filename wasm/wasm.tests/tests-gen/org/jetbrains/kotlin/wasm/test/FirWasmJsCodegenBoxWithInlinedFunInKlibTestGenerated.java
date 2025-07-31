@@ -40128,6 +40128,12 @@ public class FirWasmJsCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
           public void testUpperBounds() {
             runTest("compiler/testData/codegen/box/reflection/typeOf/nonReifiedTypeParameters/upperBounds.kt");
           }
+
+          @Test
+          @TestMetadata("typeParameterFlags.kt")
+          public void testTypeParameterFlags() {
+            runTest("compiler/testData/codegen/box/reflection/typeOf/noReflect/nonReifiedTypeParameters/typeParameterFlags.kt");
+          }
         }
       }
 
