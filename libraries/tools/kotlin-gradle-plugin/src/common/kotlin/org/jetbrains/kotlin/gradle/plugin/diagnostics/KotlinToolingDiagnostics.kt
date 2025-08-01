@@ -221,6 +221,45 @@ internal object KotlinToolingDiagnostics {
             }
     }
 
+    object NoApplicationTargetFoundDiagnostic : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(xcodeProject: File) = buildDiagnostic(
+            title = "No application target found in Xcode project",
+            description = "Could not find any application target in '${xcodeProject.path}'. The Kotlin plugin cannot verify framework integration.",
+            solution = "Please create an application target in your Xcode project to consume the Kotlin framework.",
+            documentationUrl = URI("https://kotl.in/xcode-target-setup"),
+        )
+    }
+
+    object MissingXcodeTargetDiagnostic : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(missingTargets: List<Pair<String, String>>, xcodeProject: File) = build {
+            title("Kotlin targets not configured in Xcode")
+                .description {
+                    val missingTargetsString = missingTargets.joinToString("\n") { (kotlinTargetName, expectedSdkRoot) ->
+                        " - '$kotlinTargetName' (expected SDK: '$expectedSdkRoot')"
+                    }
+                    """
+                |The following Kotlin targets are not linked to any Xcode application target in '${xcodeProject.name}':
+                |$missingTargetsString
+                """.trimMargin()
+                }
+                .solutions {
+                    missingTargets.map { (_, expectedSdkRoot) ->
+                        when (expectedSdkRoot) {
+                            "watchos" -> "'watchOS Application'"
+                            "appletvos" -> "'tvOS Application'"
+                            "macosx" -> "'macOS Application'"
+                            else -> "'iOS Application'"
+                        }
+                    }.map { app ->
+                        "Add the following new application targets to your Xcode project: $app}."
+                    }.distinct()
+                }
+                .documentationLink(URI("https://kotl.in/xcode-target-setup")) { url ->
+                    "Learn how to set up an application target in your Xcode project: $url"
+                }
+        }
+    }
+
     object DeprecatedKotlinNativeTargetsDiagnostic : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(usedTargetIds: List<String>) = buildDiagnostic(
             title = "Deprecated Kotlin/Native Targets",
