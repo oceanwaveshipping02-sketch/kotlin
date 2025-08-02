@@ -898,10 +898,13 @@ class BodyGenerator(
                 body.buildUnreachable(location)
             }
             else -> {
+                body.buildStructGet(wasmFileCodegenContext.referenceGcType(irBuiltIns.anyClass), anyRttiFieldId, location)
+                body.buildStructGet(wasmFileCodegenContext.rttiType, rttiShadowTypeObjectFieldId, location)
                 body.buildRefTestStatic(
-                    toType = wasmFileCodegenContext.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol),
+                    toType = wasmFileCodegenContext.referenceShadowType(toType.getRuntimeClass(irBuiltIns).symbol),
                     location
                 )
+                wasmFileCodegenContext.addCheckedShadowType(toType.getRuntimeClass(irBuiltIns).symbol)
             }
         }
     }
@@ -1548,6 +1551,7 @@ class BodyGenerator(
         val vTableSpecialITableFieldId = WasmSymbol(0)
         val rttiImplementedIFacesFieldId = WasmSymbol(0)
         val rttiSuperClassFieldId = WasmSymbol(1)
+        val rttiShadowTypeObjectFieldId = WasmSymbol(10)
         private val exceptionTagId = WasmSymbol(0)
         private val relativeTryLevelForRethrowInFinallyBlock = WasmImmediate.LabelIdx(0)
     }

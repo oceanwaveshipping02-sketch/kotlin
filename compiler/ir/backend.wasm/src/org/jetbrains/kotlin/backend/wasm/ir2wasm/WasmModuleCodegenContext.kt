@@ -58,6 +58,10 @@ class WasmFileCodegenContext(
         wasmFileFragment.gcTypes.define(irClass.getReferenceKey(), wasmType)
     }
 
+    fun defineShadowType(irClass: IrClassSymbol, wasmType: WasmTypeDeclaration) {
+        wasmFileFragment.shadowTypes.define(irClass.getReferenceKey(), wasmType)
+    }
+
     fun defineVTableGcType(irClass: IrClassSymbol, wasmType: WasmTypeDeclaration) {
         wasmFileFragment.vTableGcTypes.define(irClass.getReferenceKey(), wasmType)
     }
@@ -80,6 +84,13 @@ class WasmFileCodegenContext(
 
     fun referenceGcType(irClass: IrClassSymbol): WasmSymbol<WasmTypeDeclaration> =
         wasmFileFragment.gcTypes.reference(irClass.getReferenceKey())
+
+    fun referenceShadowType(irClass: IrClassSymbol): WasmSymbol<WasmTypeDeclaration> =
+        wasmFileFragment.shadowTypes.reference(irClass.getReferenceKey())
+
+    fun addCheckedShadowType(irClass: IrClassSymbol) {
+        wasmFileFragment.checkedShadowTypes.add(irClass.getReferenceKey())
+    }
 
     fun referenceVTableGcType(irClass: IrClassSymbol): WasmSymbol<WasmTypeDeclaration> =
         wasmFileFragment.vTableGcTypes.reference(irClass.getReferenceKey())

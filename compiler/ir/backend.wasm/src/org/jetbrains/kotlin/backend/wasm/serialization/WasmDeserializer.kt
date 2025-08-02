@@ -593,6 +593,8 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         globalClassITables = deserializeGlobalClassITables(),
         functionTypes = deserializeFunctionTypes(),
         gcTypes = deserializeGcTypes(),
+        shadowTypes = deserializeGcTypes(),
+        checkedShadowTypes = deserializeIdSignaturesSet(),
         vTableGcTypes = deserializeVTableGcTypes(),
         stringLiteralAddress = deserializeStringLiteralAddress(),
         stringLiteralPoolId = deserializeStringLiteralPoolId(),
@@ -620,6 +622,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
     private fun deserializeGlobalClassITables() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
     private fun deserializeFunctionTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunctionType)
     private fun deserializeGcTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeTypeDeclaration)
+    private fun deserializeIdSignaturesSet() = deserializeSet(::deserializeIdSignature)
     private fun deserializeVTableGcTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeTypeDeclaration)
     private fun deserializeStringLiteralAddress() = deserializeReferencableElements(::deserializeString, ::deserializeInt)
     private fun deserializeStringLiteralPoolId() = deserializeReferencableElements(::deserializeString, ::deserializeInt)

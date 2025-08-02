@@ -399,6 +399,8 @@ class DeclarationGenerator(
             val isLocalFlag = if (klass.isOriginallyLocalClass) TYPE_INFO_FLAG_LOCAL_CLASS else 0
             buildConstI32(isAnonymousFlag or isLocalFlag, location)
 
+            buildStructNew(wasmFileCodegenContext.referenceShadowType(klass.symbol), location)
+
             buildStructNew(wasmFileCodegenContext.rttiType, location)
         }
 
@@ -498,12 +500,20 @@ class DeclarationGenerator(
 
             val superClass = metadata.superClass
             val structType = WasmStructDeclaration(
-                name = nameStr,
+                name = "",
                 fields = fields,
                 superType = superClass?.let { wasmFileCodegenContext.referenceGcType(superClass.klass.symbol) },
                 isFinal = declaration.modality == Modality.FINAL
             )
             wasmFileCodegenContext.defineGcType(symbol, structType)
+
+            val shadowType = WasmStructDeclaration(
+                name = nameStr,
+                fields = emptyList(),
+                superType = superClass?.let { wasmFileCodegenContext.referenceShadowType(superClass.klass.symbol) },
+                isFinal = declaration.modality == Modality.FINAL
+            )
+            wasmFileCodegenContext.defineShadowType(symbol, shadowType)
         }
 
         for (member in declaration.declarations) {

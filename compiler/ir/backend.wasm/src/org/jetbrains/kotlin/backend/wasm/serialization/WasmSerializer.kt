@@ -614,6 +614,8 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeReferencableAndDefinable(globalClassITables, ::serializeIdSignature, ::serializeWasmGlobal)
             serializeReferencableAndDefinable(functionTypes, ::serializeIdSignature, ::serializeWasmFunctionType)
             serializeReferencableAndDefinable(gcTypes, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
+            serializeReferencableAndDefinable(shadowTypes, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
+            serializeSet(checkedShadowTypes, ::serializeIdSignature)
             serializeReferencableAndDefinable(vTableGcTypes, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
             serializeReferencableElements(stringLiteralAddress, ::serializeString, ::serializeInt)
             serializeReferencableElements(stringLiteralPoolId, ::serializeString, ::serializeInt)

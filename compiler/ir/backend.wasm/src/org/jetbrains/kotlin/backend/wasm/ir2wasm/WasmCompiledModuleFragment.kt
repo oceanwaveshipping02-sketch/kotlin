@@ -54,6 +54,8 @@ class WasmCompiledFileFragment(
     val globalClassITables: ReferencableAndDefinable<IdSignature, WasmGlobal> = ReferencableAndDefinable(),
     val functionTypes: ReferencableAndDefinable<IdSignature, WasmFunctionType> = ReferencableAndDefinable(),
     val gcTypes: ReferencableAndDefinable<IdSignature, WasmTypeDeclaration> = ReferencableAndDefinable(),
+    val shadowTypes: ReferencableAndDefinable<IdSignature, WasmTypeDeclaration> = ReferencableAndDefinable(),
+    val checkedShadowTypes: MutableSet<IdSignature> = mutableSetOf(),
     val vTableGcTypes: ReferencableAndDefinable<IdSignature, WasmTypeDeclaration> = ReferencableAndDefinable(),
     val stringLiteralAddress: ReferencableElements<String, Int> = ReferencableElements(),
     val stringLiteralPoolId: ReferencableElements<String, Int> = ReferencableElements(),
@@ -240,6 +242,7 @@ class WasmCompiledModuleFragment(
                 WasmStructFieldDeclaration("simpleNamePoolId", WasmI32, false),
                 WasmStructFieldDeclaration("klassId", WasmI64, false),
                 WasmStructFieldDeclaration("typeInfoFlag", WasmI32, false),
+                WasmStructFieldDeclaration("shadowTypeObject", WasmAnyRef, false),
             ),
             superType = null,
             isFinal = true
@@ -344,20 +347,66 @@ class WasmCompiledModuleFragment(
             addAll(canonicalFunctionTypes.values)
         }
 
-        val recursiveGroups = createRecursiveTypeGroups(recGroupTypes)
-
-        val mixInIndexesForGroups = mutableMapOf<Hash128Bits, Int>()
         val groupsWithMixIns = mutableListOf<RecursiveTypeGroup>()
+        groupsWithMixIns.addAll(createRecursiveTypeGroups(recGroupTypes))
 
-        recursiveGroups.mapTo(groupsWithMixIns) { group ->
-            if (group.any { it in gcTypes } && group.singleOrNull() !is WasmArrayDeclaration) {
-                addMixInGroup(group, mixInIndexesForGroups)
-            } else {
-                group
+
+
+        // Shadow types rebinding
+        val checkedShadowTypes = wasmCompiledFileFragments.flatMapTo(mutableSetOf()) { it.checkedShadowTypes }
+        val shadowTypesToDeclare = mutableSetOf<WasmTypeDeclaration>()
+        val shadowTypesToDeclareToMixinIndex = mutableMapOf<WasmTypeDeclaration, WasmTypeDeclaration>()
+
+        val stubType = WasmStructDeclaration("shadow_stub", emptyList(), null, true)
+        groupsWithMixIns.add(mutableListOf(stubType))
+
+        val visited = mutableSetOf<WasmTypeDeclaration>()
+        wasmCompiledFileFragments.forEach { fragment ->
+            fragment.shadowTypes.unbound.forEach { (definedSignature, typeSymbol) ->
+                val definedType = typeSymbol.owner
+                if (definedType !in visited) {
+                    visited.add(definedType)
+
+                    if (definedSignature in checkedShadowTypes) {
+                        val mixinToEncode = encodeIndex(definedSignature.toString().hashCode().toUInt())
+                        val mixIn = WasmStructDeclaration("_mixin_", mixinToEncode, null, true)
+                        shadowTypesToDeclareToMixinIndex[definedType] = mixIn
+
+                        var currentTypeToAdd: WasmStructDeclaration? = definedType as WasmStructDeclaration
+                        while (currentTypeToAdd != null) {
+                            shadowTypesToDeclare.add(currentTypeToAdd)
+                            currentTypeToAdd = currentTypeToAdd.superType?.owner as? WasmStructDeclaration
+                        }
+                    }
+                }
             }
         }
 
-        additionalTypes.forEach { groupsWithMixIns.add(listOf(it)) }
+        // stubbing all unused symbols
+        wasmCompiledFileFragments.forEach { fragment ->
+            fragment.shadowTypes.unbound.forEach { (_, typeSymbol) ->
+                val definedType = typeSymbol.owner
+                if (definedType !in shadowTypesToDeclare) {
+                    typeSymbol.bind(stubType)
+                }
+            }
+        }
+
+
+        val shadowTypesToDeclareList = shadowTypesToDeclare.toMutableList()
+        canonicalSort(shadowTypesToDeclareList)
+
+        shadowTypesToDeclareList.forEach { shadowTypeToAdd ->
+            val mixin = shadowTypesToDeclareToMixinIndex[shadowTypeToAdd]
+            if (mixin != null) {
+                groupsWithMixIns.add(mutableListOf(shadowTypeToAdd, mixin))
+            } else {
+                groupsWithMixIns.add(mutableListOf(shadowTypeToAdd))
+            }
+        }
+
+
+        additionalTypes.forEach { groupsWithMixIns.add(mutableListOf(it)) }
 
         return groupsWithMixIns
     }
@@ -497,6 +546,7 @@ class WasmCompiledModuleFragment(
         bindFileFragments(wasmCompiledFileFragments, { it.globalFields.unbound }, { it.globalFields.defined })
         bindFileFragments(wasmCompiledFileFragments, { it.globalVTables.unbound }, { it.globalVTables.defined })
         bindFileFragments(wasmCompiledFileFragments, { it.gcTypes.unbound }, { it.gcTypes.defined })
+        bindFileFragments(wasmCompiledFileFragments, { it.shadowTypes.unbound }, { it.shadowTypes.defined })
         bindFileFragments(wasmCompiledFileFragments, { it.vTableGcTypes.unbound }, { it.vTableGcTypes.defined })
         bindFileFragments(wasmCompiledFileFragments, { it.globalClassITables.unbound }, { it.globalClassITables.defined })
         bindFileFragments(wasmCompiledFileFragments, { it.functionTypes.unbound }, { it.functionTypes.defined })

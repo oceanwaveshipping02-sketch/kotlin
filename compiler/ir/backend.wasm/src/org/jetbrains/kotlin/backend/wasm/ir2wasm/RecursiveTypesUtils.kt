@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.backend.wasm.utils.StronglyConnectedComponents
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 import org.jetbrains.kotlin.wasm.ir.*
 
-typealias RecursiveTypeGroup = List<WasmTypeDeclaration>
+typealias RecursiveTypeGroup = MutableList<WasmTypeDeclaration>
 
 private fun WasmType.toTypeDeclaration(): WasmTypeDeclaration? {
     val heapType = when (val type = this) {
@@ -129,31 +129,36 @@ private val indexes = arrayOf(
     WasmStructRef,
 )
 
-internal fun encodeIndex(index: Int): List<WasmStructFieldDeclaration> {
+internal fun encodeIndex(index: UInt): List<WasmStructFieldDeclaration> {
     var current = index
     val result = mutableListOf<WasmStructFieldDeclaration>()
     //i31 type is not used by kotlin/wasm, so mixin index would never clash with regular signature
     result.add(WasmStructFieldDeclaration("", WasmI31Ref, false))
-    while (current != 0) {
-        result.add(WasmStructFieldDeclaration("", indexes[current % 10], false))
-        current /= 10
+    while (current != 0U) {
+        result.add(WasmStructFieldDeclaration("", indexes[(current % 10U).toInt()], false))
+        current /= 10U
     }
     return result
 }
 
-internal fun addMixInGroup(group: RecursiveTypeGroup, mixInIndexesForGroups: MutableMap<Hash128Bits, Int>): RecursiveTypeGroup {
-    val firstDeclaration = group.firstOrNull() ?: return group
-
-    val fingerprint = wasmDeclarationFingerprint(firstDeclaration, Hash128Bits(), visited = mutableSetOf())
-
-    val groupIndex = mixInIndexesForGroups[fingerprint]
-    if (groupIndex != null) {
-        val nextIndex = groupIndex + 1
-        mixInIndexesForGroups[fingerprint] = nextIndex
-        val mixIn = WasmStructDeclaration("mixin_$nextIndex", encodeIndex(nextIndex), null, true)
-        return group + mixIn
-    } else {
-        mixInIndexesForGroups[fingerprint] = 0
-        return group
-    }
+internal fun canonicalSort(group: RecursiveTypeGroup) {
+    if (group.size == 1) return
+    group.sortBy(::wasmTypeDeclarationOrderKey)
 }
+
+//internal fun addMixInGroup(group: RecursiveTypeGroup, mixInIndexesForGroups: MutableMap<Hash128Bits, Int>): RecursiveTypeGroup {
+//    val firstDeclaration = group.firstOrNull() ?: return group
+//
+//    val fingerprint = wasmDeclarationFingerprint(firstDeclaration, Hash128Bits(), visited = mutableSetOf())
+//
+//    val groupIndex = mixInIndexesForGroups[fingerprint]
+//    if (groupIndex != null) {
+//        val nextIndex = groupIndex + 1
+//        mixInIndexesForGroups[fingerprint] = nextIndex
+//        val mixIn = WasmStructDeclaration("mixin_$nextIndex", encodeIndex(nextIndex), null, true)
+//        return group + mixIn
+//    } else {
+//        mixInIndexesForGroups[fingerprint] = 0
+//        return group
+//    }
+//}
