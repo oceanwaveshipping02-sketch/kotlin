@@ -265,6 +265,12 @@ public class FirPsiDiagnosticsTestWithJvmIrBackendGenerated extends AbstractFirP
       }
 
       @Test
+      @TestMetadata("bigArityBridgeAndFakeOverride.kt")
+      public void testBigArityBridgeAndFakeOverride() {
+        runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/bridges/bigArityBridgeAndFakeOverride.kt");
+      }
+
+      @Test
       @TestMetadata("bridgeAndFakeOverride.kt")
       public void testBridgeAndFakeOverride() {
         runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/bridges/bridgeAndFakeOverride.kt");
@@ -316,6 +322,18 @@ public class FirPsiDiagnosticsTestWithJvmIrBackendGenerated extends AbstractFirP
       @TestMetadata("inheritedBridgeAndFakeOverride.kt")
       public void testInheritedBridgeAndFakeOverride() {
         runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/bridges/inheritedBridgeAndFakeOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("smallArityBridgeAndFakeOverride.kt")
+      public void testSmallArityBridgeAndFakeOverride() {
+        runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/bridges/smallArityBridgeAndFakeOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendBridgeAndFakeOverride.kt")
+      public void testSuspendBridgeAndFakeOverride() {
+        runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/bridges/suspendBridgeAndFakeOverride.kt");
       }
 
       @Test
