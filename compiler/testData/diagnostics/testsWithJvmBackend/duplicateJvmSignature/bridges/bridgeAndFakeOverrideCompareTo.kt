@@ -11,5 +11,5 @@ open class A() {
 }<!>
 
 fun test() {
-    B().compareTo(Object())
+    B().compareTo(object { })
 }

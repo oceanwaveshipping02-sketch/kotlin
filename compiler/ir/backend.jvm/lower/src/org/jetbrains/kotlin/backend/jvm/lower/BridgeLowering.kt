@@ -408,7 +408,7 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
         }.apply {
             copyAttributes(target)
             copyParametersWithErasure(this@addBridge, bridge.overridden)
-            bridgeCallee = target
+            copyBridgeCalleeFromOrSetTo(target)
             context.remapMultiFieldValueClassStructure(bridge.overridden, this, parametersMappingOrNull = null)
 
             // If target is a throwing stub, bridge also should just throw UnsupportedOperationException.
@@ -463,7 +463,7 @@ internal class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPas
                 ?: specialBridge.overridden.returnType.eraseTypeParameters()
         }.apply {
             copyParametersWithErasure(this@addSpecialBridge, specialBridge.overridden, specialBridge.substitutedParameterTypes)
-            bridgeCallee = target
+            copyBridgeCalleeFromOrSetTo(target)
             context.remapMultiFieldValueClassStructure(specialBridge.overridden, this, parametersMappingOrNull = null)
 
             body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
