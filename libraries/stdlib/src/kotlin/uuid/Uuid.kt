@@ -775,7 +775,8 @@ private object UuidV7Generator {
      *
      * Implementation uses a fixed bit-length dedicated counter occupying all 12 bits of rand_a field,
      * uses a fixed bit-length dedicated counter seeding to (re) initialize a counter and
-     * tracks counter overflows.
+     * tracks counter overflows. When re-initializing the counter, its most significant bit is always unset
+     * to increase the values range.
      *
      * Refer to [RFC-9562, 6.2. Monotonicity and Counters](https://www.rfc-editor.org/rfc/rfc9562.html#section-6.2)
      * for more details.
@@ -792,8 +793,9 @@ private object UuidV7Generator {
             secureRandomBytes(it)
         }
 
-        // let's keep moderate optimism and initialize re-initialize the counter beforehand
-        val newCounter = randomBytes[8].toInt().and(0x0F).shl(8).or(
+        // Let's keep moderate optimism and initialize re-initialize the counter beforehand.
+        // Note that the MSB is always unset (thus the mask is 0x07).
+        val newCounter = randomBytes[8].toInt().and(0x07).shl(8).or(
             randomBytes[9].toInt().and(0xFF)
         ).or(VERSION_MASK)
 
