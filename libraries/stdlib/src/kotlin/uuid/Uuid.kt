@@ -788,7 +788,7 @@ private object UuidV7Generator {
     fun generate(clock: Clock): Uuid {
         // we need random values for:
         // - 62 bit random rand_b, which will be placed in the first 8 bytes
-        // - 12 bit random rand_a, which will be placed in the trailing two bytes
+        // - 11 bit random rand_a, which will be placed in the trailing two bytes
         val randomBytes = ByteArray(10).also {
             secureRandomBytes(it)
         }
@@ -829,19 +829,19 @@ private object UuidV7Generator {
             }
         }
 
-        val uuidBytes = ByteArray(Uuid.SIZE_BYTES)
         // newTimeStampAndCounter is a valid Uuid prefix, se can just copy it:
         // - first (in the big-endian order) 48 bits are timestamp
         // - followed by version (0b0111)
         // - followed by 12 bit rand_a field
-        uuidBytes.setLongAt(0, newTimeStampAndCounter)
-        // The remaining 8 bytes are two-bit variant field (0b10) followed by 62 rand_b bits.
-        // Copy all random bytes first.
-        randomBytes.copyInto(uuidBytes, 8, 0, 8)
-        // And then set the variant field.
-        uuidBytes[8] = uuidBytes[8]
+        //
+        // For the suffix, we need to copy first 8 random bytes
+        // and set two most significant bits to a valid variant value:
+        // - variant (0b10)
+        // - rand_b (62 bit)
+        randomBytes[0] = randomBytes[0]
             .and(0x3F) // clear two MSBs
             .or(0x80.toByte()) // set then to 0b10
-        return Uuid.fromByteArray(uuidBytes)
+        val variantAndRandB = randomBytes.getLongAt(0)
+        return Uuid.fromLongs(newTimeStampAndCounter, variantAndRandB)
     }
 }
