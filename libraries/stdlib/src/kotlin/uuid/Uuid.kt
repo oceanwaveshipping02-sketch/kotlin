@@ -650,7 +650,6 @@ internal fun ByteArray.getLongAtCommonImpl(index: Int): Long {
 @ExperimentalUuidApi
 internal expect fun Long.formatBytesInto(dst: ByteArray, dstOffset: Int, startIndex: Int, endIndex: Int)
 
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun Long.formatBytesIntoCommonImpl(dst: ByteArray, dstOffset: Int, startIndex: Int, endIndex: Int) {
     var dstIndex = dstOffset
@@ -689,11 +688,10 @@ internal expect fun uuidParseHexDash(hexDashString: String): Uuid
 @ExperimentalUuidApi
 internal expect fun uuidParseHexDashOrNull(hexDashString: String): Uuid?
 
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun uuidParseHexDashCommonImpl(hexDashString: String): Uuid {
     return uuidParseHexDashCommonImpl(hexDashString) { expectation, string, index ->
-        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+        uuidThrowUnexpectedCharacterException(expectation, string, index)
     }
 }
 
@@ -736,15 +734,13 @@ internal expect fun uuidParseHex(hexString: String): Uuid
 @ExperimentalUuidApi
 internal expect fun uuidParseHexOrNull(hexString: String): Uuid?
 
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun uuidParseHexCommonImpl(hexString: String): Uuid {
     return uuidParseHexCommonImpl(hexString) { expectation, string, index ->
-        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+        uuidThrowUnexpectedCharacterException(expectation, string, index)
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun uuidParseHexOrNullCommonImpl(hexString: String): Uuid? {
     return uuidParseHexCommonImpl(hexString) { _, _, _ ->
@@ -784,4 +780,8 @@ private fun String.truncateForErrorMessage(maxLength: Int): String {
 
 private fun ByteArray.truncateForErrorMessage(maxSize: Int): String {
     return joinToString(prefix = "[", postfix = "]", limit = maxSize)
+}
+
+internal fun uuidThrowUnexpectedCharacterException(expectation: String, string: String, index: Int): Nothing {
+    throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
 }

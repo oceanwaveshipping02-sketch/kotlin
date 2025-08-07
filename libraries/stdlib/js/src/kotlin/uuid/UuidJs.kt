@@ -81,7 +81,7 @@ private fun ByteArray.setIntAt(index: Int, value: Int) {
 @ExperimentalUuidApi
 internal actual fun uuidParseHexDash(hexDashString: String): Uuid {
     return uuidParseHexDash(hexDashString) { expectation, string, index ->
-        throw IllegalStateException("Expected $expectation at index $index, was '${string[index]}'")
+        uuidThrowUnexpectedCharacterException(expectation, string, index)
     }
 }
 
