@@ -78,21 +78,37 @@ private fun ByteArray.setIntAt(index: Int, value: Int) {
 }
 
 // Avoid bitwise operations with Longs in JS
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal actual fun uuidParseHexDash(hexDashString: String): Uuid {
+    return uuidParseHexDash(hexDashString) { expectation, string, index ->
+        throw IllegalStateException("Expected $expectation at index $index, was '${string[index]}'")
+    }
+}
+
+// Avoid bitwise operations with Longs in JS
+@ExperimentalUuidApi
+internal actual fun uuidParseHexDashOrNull(hexDashString: String): Uuid? {
+    return uuidParseHexDash(hexDashString) { _, _, _ ->
+        return null
+    }
+}
+
+@ExperimentalUuidApi
+internal inline fun uuidParseHexDash(hexDashString: String, onError: (String, String, Int) -> Nothing): Uuid {
+    val hexDigit = "a hexadecimal digit"
+
     // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     // 8 hex digits fit into an Int
-    val part1 = hexDashString.hexToInt(startIndex = 0, endIndex = 8)
-    hexDashString.checkHyphenAt(8)
-    val part2 = hexDashString.hexToInt(startIndex = 9, endIndex = 13)
-    hexDashString.checkHyphenAt(13)
-    val part3 = hexDashString.hexToInt(startIndex = 14, endIndex = 18)
-    hexDashString.checkHyphenAt(18)
-    val part4 = hexDashString.hexToInt(startIndex = 19, endIndex = 23)
-    hexDashString.checkHyphenAt(23)
-    val part5a = hexDashString.hexToInt(startIndex = 24, endIndex = 28)
-    val part5b = hexDashString.hexToInt(startIndex = 28, endIndex = 36)
+    val part1 = hexDashString.parseHexToInt(startIndex = 0, endIndex = 8, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(8, onError)
+    val part2 = hexDashString.parseHexToInt(startIndex = 9, endIndex = 13, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(13, onError)
+    val part3 = hexDashString.parseHexToInt(startIndex = 14, endIndex = 18, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(18, onError)
+    val part4 = hexDashString.parseHexToInt(startIndex = 19, endIndex = 23, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(23, onError)
+    val part5a = hexDashString.parseHexToInt(startIndex = 24, endIndex = 28, expected = hexDigit, onError = onError)
+    val part5b = hexDashString.parseHexToInt(startIndex = 28, endIndex = 36, expected = hexDigit, onError = onError)
 
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val msb = Long(
@@ -109,20 +125,47 @@ internal actual fun uuidParseHexDash(hexDashString: String): Uuid {
 }
 
 // Avoid bitwise operations with Longs in JS
-@OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal actual fun uuidParseHex(hexString: String): Uuid {
+    return uuidParseHex(hexString) { expectation, string, index ->
+        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+    }
+}
+
+// Avoid bitwise operations with Longs in JS
+@ExperimentalUuidApi
+internal actual fun uuidParseHexOrNull(hexString: String): Uuid? {
+    return uuidParseHex(hexString) { _, _, _ ->
+        return null
+    }
+}
+
+@ExperimentalUuidApi
+private inline fun uuidParseHex(hexString: String, onError: (String, String, Int) -> Nothing): Uuid {
     // 8 hex digits fit into an Int
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val msb = Long(
-        high = hexString.hexToInt(startIndex = 0, endIndex = 8),
-        low = hexString.hexToInt(startIndex = 8, endIndex = 16)
+        high = hexString.parseHexToInt(startIndex = 0, endIndex = 8, "a hexadecimal digit", onError),
+        low = hexString.parseHexToInt(startIndex = 8, endIndex = 16, "a hexadecimal digit", onError)
     )
 
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val lsb = Long(
-        high = hexString.hexToInt(startIndex = 16, endIndex = 24),
-        low = hexString.hexToInt(startIndex = 24, endIndex = 32)
+        high = hexString.parseHexToInt(startIndex = 16, endIndex = 24, "a hexadecimal digit", onError),
+        low = hexString.parseHexToInt(startIndex = 24, endIndex = 32, "a hexadecimal digit", onError)
     )
     return Uuid.fromLongs(msb, lsb)
+}
+
+private inline fun String.parseHexToInt(startIndex: Int, endIndex: Int, expected: String, onError: (String, String, Int) -> Nothing): Int {
+    var result = 0
+    for (index in startIndex until endIndex) {
+        val code = this[index].code
+        if (code ushr 8 == 0 && HEX_DIGITS_TO_DECIMAL[code] >= 0) {
+            result = result.shl(4).or(HEX_DIGITS_TO_DECIMAL[code])
+        } else {
+            onError(expected, this, index)
+        }
+    }
+    return result
 }

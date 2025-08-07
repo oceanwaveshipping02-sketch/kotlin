@@ -399,6 +399,38 @@ public class Uuid private constructor(
         }
 
         /**
+         * Parses a uuid from one of the supported string representations, returning `null` if it matches none of them.
+         *
+         * This function supports parsing the standard hex-and-dash and the hexadecimal string representations.
+         * For details about the hex-and-dash format, refer to [toHexDashString].
+         * If parsing only the hex-and-dash format is desired, use [parseHexDashOrNull] instead.
+         * For details about the hexadecimal format, refer to [toHexString].
+         * If parsing only the hexadecimal format is desired, use [parseHexOrNull] instead.
+         *
+         * Note that this function is case-insensitive,
+         * meaning both lowercase and uppercase hexadecimal digits are considered valid.
+         * Additionally, support for more uuid formats may be introduced in the future.
+         * Therefore, users should not rely on the rejection of formats not currently supported.
+         *
+         * @param uuidString A string in one of the supported uuid formats.
+         * @return A uuid equivalent to the specified uuid string, or `null`,
+         * if the string does not conform any of supported formats.
+         *
+         * @see Uuid.parseHexDashOrNull
+         * @see Uuid.parseHexOrNull
+         * @see Uuid.parse
+         * @sample samples.uuid.Uuids.parseOrNull
+         */
+        @SinceKotlin("2.3")
+        public fun parseOrNull(uuidString: String): Uuid? {
+            return when (uuidString.length) {
+                36 -> parseHexDashOrNull(uuidString)
+                32 -> parseHexOrNull(uuidString)
+                else -> null
+            }
+        }
+
+        /**
          * Parses a uuid from the standard hex-and-dash string representation as described in [Uuid.toHexDashString].
          *
          * This function is case-insensitive, and for a valid [hexDashString], the following property holds:
@@ -417,6 +449,7 @@ public class Uuid private constructor(
          * @return A uuid equivalent to the specified uuid string.
          *
          * @see Uuid.toHexDashString
+         * @see Uuid.parseHexDashOrNull
          * @sample samples.uuid.Uuids.parseHexDash
          */
         @SinceKotlin("2.1")
@@ -426,6 +459,33 @@ public class Uuid private constructor(
                         "but was \"${hexDashString.truncateForErrorMessage(64)}\" of length ${hexDashString.length}"
             }
             return uuidParseHexDash(hexDashString)
+        }
+
+        /**
+         * Parses a uuid from the standard hex-and-dash string representation as described in [Uuid.toHexDashString],
+         * returning `null` is a string has a different format.
+         *
+         * This function is case-insensitive, and for a valid [hexDashString], the following property holds:
+         * ```kotlin
+         * val uuid = Uuid.parseHexDashOrNull(hexDashString)!!
+         * assertEquals(uuid.toHexDashString(), hexDashString.lowercase())
+         * ```
+         *
+         * The standard textual representation of uuids, also known as hex-and-dash format, is specified by
+         * [RFC 9562 section 4](https://www.rfc-editor.org/rfc/rfc9562.html#section-4).
+         *
+         * @param hexDashString A string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+         *   where each 'x' is a hexadecimal digit, either lowercase or uppercase.
+         * @return A uuid equivalent to the specified uuid string, or `null`, if the string does not conform the format.
+         *
+         * @see Uuid.toHexDashString
+         * @see Uuid.parseHexDash
+         * @sample samples.uuid.Uuids.parseHexDashOrNull
+         */
+        @SinceKotlin("2.3")
+        public fun parseHexDashOrNull(hexDashString: String): Uuid? {
+            if (hexDashString.length != 36) return null
+            return uuidParseHexDashOrNull(hexDashString)
         }
 
         /**
@@ -442,6 +502,7 @@ public class Uuid private constructor(
          * @return A uuid represented by the specified hexadecimal string.
          *
          * @see Uuid.toHexString
+         * @see Uuid.parseHexOrNull
          * @sample samples.uuid.Uuids.parseHex
          */
         public fun parseHex(hexString: String): Uuid {
@@ -450,6 +511,29 @@ public class Uuid private constructor(
                         "but was \"${hexString.truncateForErrorMessage(64)}\" of length ${hexString.length}"
             }
             return uuidParseHex(hexString)
+        }
+
+        /**
+         * Parses a uuid from the hexadecimal string representation as described in [Uuid.toHexString],
+         * returning `null` if a string has a different format.
+         *
+         * This function is case-insensitive, and for a valid [hexString], the following property holds:
+         * ```kotlin
+         * val uuid = Uuid.parseHexOrNull(hexString)!!
+         * assertEquals(uuid.toHexString(), hexString.lowercase())
+         * ```
+         *
+         * @param hexString A 32-character hexadecimal string representing the uuid, without hyphens.
+         * @return A uuid represented by the specified hexadecimal string, or `null`, if the string does not conform the format.
+         *
+         * @see Uuid.toHexString
+         * @see Uuid.parseHex
+         * @sample samples.uuid.Uuids.parseHexOrNull
+         */
+        @SinceKotlin("2.3")
+        public fun parseHexOrNull(hexString: String): Uuid? {
+            if (hexString.length != 32) return null
+            return uuidParseHexOrNull(hexString)
         }
 
         /**
@@ -579,10 +663,6 @@ internal fun Long.formatBytesIntoCommonImpl(dst: ByteArray, dstOffset: Int, star
     }
 }
 
-internal fun String.checkHyphenAt(index: Int) {
-    require(this[index] == '-') { "Expected '-' (hyphen) at index $index, but was '${this[index]}'" }
-}
-
 /**
  * Extracts bytes from the Long [value] and stores them into this byte array starting at [index].
  * The bytes are stored in a big-endian manner.
@@ -605,20 +685,44 @@ internal fun ByteArray.setLongAtCommonImpl(index: Int, value: Long) {
 @ExperimentalUuidApi
 internal expect fun uuidParseHexDash(hexDashString: String): Uuid
 
+// Implement differently in JS to avoid bitwise operations with Longs
+@ExperimentalUuidApi
+internal expect fun uuidParseHexDashOrNull(hexDashString: String): Uuid?
+
 @OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun uuidParseHexDashCommonImpl(hexDashString: String): Uuid {
+    return uuidParseHexDashCommonImpl(hexDashString) { expectation, string, index ->
+        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+    }
+}
+
+@ExperimentalUuidApi
+internal fun uuidParseHexDashOrNullCommonImpl(hexDashString: String): Uuid? {
+    return uuidParseHexDashCommonImpl(hexDashString) { _, _, _ ->
+        return null
+    }
+}
+
+internal inline fun String.uuidCheckHyphenAt(index: Int, onError: (String, String, Int) -> Unit) {
+    if (this[index] != '-') onError("'-' (hyphen)", this, index)
+}
+
+@ExperimentalUuidApi
+internal inline fun uuidParseHexDashCommonImpl(hexDashString: String, onError: (String, String, Int) -> Nothing): Uuid {
+    val hexDigit = "a hexadecimal digit"
+
     // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     // 16 hex digits fit into a Long
-    val part1 = hexDashString.hexToLong(startIndex = 0, endIndex = 8)
-    hexDashString.checkHyphenAt(8)
-    val part2 = hexDashString.hexToLong(startIndex = 9, endIndex = 13)
-    hexDashString.checkHyphenAt(13)
-    val part3 = hexDashString.hexToLong(startIndex = 14, endIndex = 18)
-    hexDashString.checkHyphenAt(18)
-    val part4 = hexDashString.hexToLong(startIndex = 19, endIndex = 23)
-    hexDashString.checkHyphenAt(23)
-    val part5 = hexDashString.hexToLong(startIndex = 24, endIndex = 36)
+    val part1 = hexDashString.parseHexToLong(startIndex = 0, endIndex = 8, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(8, onError)
+    val part2 = hexDashString.parseHexToLong(startIndex = 9, endIndex = 13, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(13, onError)
+    val part3 = hexDashString.parseHexToLong(startIndex = 14, endIndex = 18, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(18, onError)
+    val part4 = hexDashString.parseHexToLong(startIndex = 19, endIndex = 23, expected = hexDigit, onError = onError)
+    hexDashString.uuidCheckHyphenAt(23, onError)
+    val part5 = hexDashString.parseHexToLong(startIndex = 24, endIndex = 36, expected = hexDigit, onError = onError)
 
     val msb = (part1 shl 32) or (part2 shl 16) or part3
     val lsb = (part4 shl 48) or part5
@@ -629,13 +733,49 @@ internal fun uuidParseHexDashCommonImpl(hexDashString: String): Uuid {
 @ExperimentalUuidApi
 internal expect fun uuidParseHex(hexString: String): Uuid
 
+@ExperimentalUuidApi
+internal expect fun uuidParseHexOrNull(hexString: String): Uuid?
+
 @OptIn(ExperimentalStdlibApi::class)
 @ExperimentalUuidApi
 internal fun uuidParseHexCommonImpl(hexString: String): Uuid {
+    return uuidParseHexCommonImpl(hexString) { expectation, string, index ->
+        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+    }
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+@ExperimentalUuidApi
+internal fun uuidParseHexOrNullCommonImpl(hexString: String): Uuid? {
+    return uuidParseHexCommonImpl(hexString) { _, _, _ ->
+        return null
+    }
+}
+
+@ExperimentalUuidApi
+internal inline fun uuidParseHexCommonImpl(hexString: String, onError: (String, String, Int) -> Nothing): Uuid {
     // 16 hex digits fit into a Long
-    val msb = hexString.hexToLong(startIndex = 0, endIndex = 16)
-    val lsb = hexString.hexToLong(startIndex = 16, endIndex = 32)
+    val msb = hexString.parseHexToLong(startIndex = 0, endIndex = 16, "a hexadecimal digit", onError = onError)
+    val lsb = hexString.parseHexToLong(startIndex = 16, endIndex = 32, "a hexadecimal digit", onError = onError)
     return Uuid.fromLongs(msb, lsb)
+}
+
+private inline fun String.parseHexToLong(
+    startIndex: Int,
+    endIndex: Int,
+    expected: String,
+    onError: (String, String, Int) -> Nothing
+): Long {
+    var result = 0L
+    for (index in startIndex until endIndex) {
+        val code = this[index].code
+        if (code ushr 8 == 0 && HEX_DIGITS_TO_LONG_DECIMAL[code] >= 0) {
+            result = result.shl(4).or(HEX_DIGITS_TO_LONG_DECIMAL[code])
+        } else {
+            onError(expected, this, index)
+        }
+    }
+    return result
 }
 
 private fun String.truncateForErrorMessage(maxLength: Int): String {

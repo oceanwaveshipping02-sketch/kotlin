@@ -38,7 +38,7 @@ private val BYTE_TO_UPPER_CASE_HEX_DIGITS = IntArray(256) {
  * When the table is 256 entries wide then both the `code ushr 8 == 0` and array bounds check are eliminated.
  * This noticeably improves performance for ASCII strings.
  */
-private val HEX_DIGITS_TO_DECIMAL = IntArray(256) { -1 }.apply {
+internal val HEX_DIGITS_TO_DECIMAL = IntArray(256) { -1 }.apply {
     LOWER_CASE_HEX_DIGITS.forEachIndexed { index, char -> this[char.code] = index }
     UPPER_CASE_HEX_DIGITS.forEachIndexed { index, char -> this[char.code] = index }
 }
@@ -50,7 +50,7 @@ private val HEX_DIGITS_TO_DECIMAL = IntArray(256) { -1 }.apply {
  *
  * @see HEX_DIGITS_TO_DECIMAL
  */
-private val HEX_DIGITS_TO_LONG_DECIMAL = LongArray(256) { -1 }.apply {
+internal val HEX_DIGITS_TO_LONG_DECIMAL = LongArray(256) { -1 }.apply {
     LOWER_CASE_HEX_DIGITS.forEachIndexed { index, char -> this[char.code] = index.toLong() }
     UPPER_CASE_HEX_DIGITS.forEachIndexed { index, char -> this[char.code] = index.toLong() }
 }
