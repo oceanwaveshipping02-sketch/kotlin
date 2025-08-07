@@ -188,6 +188,16 @@ public interface WasmArguments : CommonKlibBasedArguments {
     public val X_WASM_GENERATE_DWARF: WasmArgument<Boolean> = WasmArgument("X_WASM_GENERATE_DWARF")
 
     /**
+     * Mark heap types as shared in accordance to "Shared-Everything Threads" proposal.
+     *
+     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
+     */
+    @JvmField
+    @ExperimentalCompilerArgument
+    public val X_WASM_USE_SHARED_OBJECTS: WasmArgument<Boolean> =
+        WasmArgument("X_WASM_USE_SHARED_OBJECTS")
+
+    /**
      * Dump reachability information collected about declarations while performing DCE to a file. The format will be chosen automatically based on the file extension. Supported output formats include JSON for .json, a JS const initialized with a plain object containing information for .js, and plain text for all other file types.
      *
      * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.

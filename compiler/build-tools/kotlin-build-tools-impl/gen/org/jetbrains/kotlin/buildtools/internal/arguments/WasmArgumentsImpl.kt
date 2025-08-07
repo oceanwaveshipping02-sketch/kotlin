@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_W
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_SOURCES
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_TARGET
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_USE_NEW_EXCEPTION_PROPOSAL
+import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_USE_SHARED_OBJECTS
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS
 import org.jetbrains.kotlin.cli.common.arguments.K2WasmCompilerArguments
 
@@ -62,6 +63,7 @@ public open class WasmArgumentsImpl : CommonKlibBasedArgumentsImpl(), WasmArgume
     if ("X_WASM_PRESERVE_IC_ORDER" in optionsMap) { arguments.preserveIcOrder = get(X_WASM_PRESERVE_IC_ORDER) }
     if ("X_WASM_IC_CACHE_READONLY" in optionsMap) { arguments.icCacheReadonly = get(X_WASM_IC_CACHE_READONLY) }
     if ("X_WASM_GENERATE_DWARF" in optionsMap) { arguments.generateDwarf = get(X_WASM_GENERATE_DWARF) }
+    if ("X_WASM_USE_SHARED_OBJECTS" in optionsMap) { arguments.wasmUseSharedObjects = get(X_WASM_USE_SHARED_OBJECTS) }
     if ("X_IR_DCE_DUMP_REACHABILITY_INFO_TO_FILE" in optionsMap) { arguments.irDceDumpReachabilityInfoToFile = get(X_IR_DCE_DUMP_REACHABILITY_INFO_TO_FILE) }
     if ("X_IR_DUMP_DECLARATION_IR_SIZES_TO_FILE" in optionsMap) { arguments.irDceDumpDeclarationIrSizesToFile = get(X_IR_DUMP_DECLARATION_IR_SIZES_TO_FILE) }
     return arguments
