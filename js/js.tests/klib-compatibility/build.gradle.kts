@@ -30,6 +30,7 @@ dependencies {
 val customCompilerArtifacts1920: Configuration by configurations.creating
 val customCompilerArtifacts200: Configuration by configurations.creating
 val customCompilerArtifacts210: Configuration by configurations.creating
+val customCompilerArtifacts220: Configuration by configurations.creating
 // Step 1: Add a new configuration here.
 
 /* Dependencies for custom compiler versions. */
@@ -53,6 +54,11 @@ dependencies {
     customCompilerArtifacts210("org.jetbrains.kotlin:kotlin-stdlib-js:2.1.0")
     customCompilerArtifacts210("org.jetbrains.kotlin:kotlin-test-js:2.1.0")
 
+    /* 2.2.0 */
+    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.0")
+    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-stdlib-js:2.2.0")
+    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-test-js:2.2.0")
+
     // Step 2: Add the dependencies for the new configuration here.
 }
 
@@ -60,6 +66,7 @@ dependencies {
 val customCompilerArtifactsDir1920: Provider<Directory> = layout.buildDirectory.dir("customCompiler_1920")
 val customCompilerArtifactsDir200: Provider<Directory> = layout.buildDirectory.dir("customCompiler_200")
 val customCompilerArtifactsDir210: Provider<Directory> = layout.buildDirectory.dir("customCompiler_210")
+val customCompilerArtifactsDir220: Provider<Directory> = layout.buildDirectory.dir("customCompiler_220")
 // Step 3: Add a new directory here.
 
 /* Download tasks for custom compiler artifacts. */
@@ -74,6 +81,10 @@ val downloadCustomCompilerArtifacts200: TaskProvider<Sync> by tasks.registering(
 val downloadCustomCompilerArtifacts210: TaskProvider<Sync> by tasks.registering(Sync::class) {
     from(customCompilerArtifacts210)
     into(customCompilerArtifactsDir210)
+}
+val downloadCustomCompilerArtifacts220: TaskProvider<Sync> by tasks.registering(Sync::class) {
+    from(customCompilerArtifacts220)
+    into(customCompilerArtifactsDir220)
 }
 // Step 4: Add a new download task here.
 
@@ -121,6 +132,10 @@ projectTest("testCustomFirstPhase200", jUnitMode = JUnitMode.JUnit5) {
 projectTest("testCustomFirstPhase210", jUnitMode = JUnitMode.JUnit5) {
     setUpJsBoxTests()
     setUpCustomCompiler("2.1.0", downloadCustomCompilerArtifacts210, customCompilerArtifactsDir210)
+}
+projectTest("testCustomFirstPhase220", jUnitMode = JUnitMode.JUnit5) {
+    setUpJsBoxTests()
+    setUpCustomCompiler("2.2.0", downloadCustomCompilerArtifacts220, customCompilerArtifactsDir220)
 }
 // Step 5: Add a new test task here.
 
