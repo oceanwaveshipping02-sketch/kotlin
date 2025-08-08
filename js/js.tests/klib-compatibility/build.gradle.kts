@@ -28,6 +28,7 @@ dependencies {
 
 /* Configurations for custom compiler versions. */
 val customCompilerArtifacts1920: Configuration by configurations.creating
+val customCompilerArtifacts200: Configuration by configurations.creating
 // Step 1: Add a new configuration here.
 
 /* Dependencies for custom compiler versions. */
@@ -41,17 +42,27 @@ dependencies {
         attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
     }
 
+    /* 2.0.0 */
+    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
+    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-stdlib-js:2.0.0")
+    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-test-js:2.0.0")
+
     // Step 2: Add the dependencies for the new configuration here.
 }
 
 /* Directories with custom compiler artifacts. */
 val customCompilerArtifactsDir1920: Provider<Directory> = layout.buildDirectory.dir("customCompiler_1920")
+val customCompilerArtifactsDir200: Provider<Directory> = layout.buildDirectory.dir("customCompiler_200")
 // Step 3: Add a new directory here.
 
 /* Download tasks for custom compiler artifacts. */
 val downloadCustomCompilerArtifacts1920: TaskProvider<Sync> by tasks.registering(Sync::class) {
     from(customCompilerArtifacts1920)
     into(customCompilerArtifactsDir1920)
+}
+val downloadCustomCompilerArtifacts200: TaskProvider<Sync> by tasks.registering(Sync::class) {
+    from(customCompilerArtifacts200)
+    into(customCompilerArtifactsDir200)
 }
 // Step 4: Add a new download task here.
 
@@ -91,6 +102,10 @@ fun Test.setUpCustomCompiler(
 projectTest("testCustomFirstPhase1920", jUnitMode = JUnitMode.JUnit5) {
     setUpJsBoxTests()
     setUpCustomCompiler("1.9.20", downloadCustomCompilerArtifacts1920, customCompilerArtifactsDir1920)
+}
+projectTest("testCustomFirstPhase200", jUnitMode = JUnitMode.JUnit5) {
+    setUpJsBoxTests()
+    setUpCustomCompiler("2.0.0", downloadCustomCompilerArtifacts200, customCompilerArtifactsDir200)
 }
 // Step 5: Add a new test task here.
 
