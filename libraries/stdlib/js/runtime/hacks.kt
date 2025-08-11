@@ -13,6 +13,7 @@ internal fun throwUninitializedPropertyAccessException(name: String): Nothing =
 internal fun throwUnsupportedOperationException(message: String): Nothing =
     throw UnsupportedOperationException(message)
 
+// KT-77876: Remove @PublishedApi after fix of KT-77876
 @PublishedApi
 internal fun throwKotlinNothingValueException(): Nothing =
     throw KotlinNothingValueException()
