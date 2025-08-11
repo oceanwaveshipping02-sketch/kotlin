@@ -54,6 +54,7 @@ open class SExpressionBuilder {
 class WasmIrToText(
     private val debugInformationGenerator: DebugInformationGenerator? = null,
     private val optimizeInstructionFlow: Boolean = true,
+    private val emitSharedObjects: Boolean = false,
 ) : SExpressionBuilder(), DebugInformationConsumer {
     override fun consumeDebugInformation(debugInformation: DebugInformation) {
         debugInformation.forEach {
@@ -328,13 +329,15 @@ class WasmIrToText(
     private fun appendFunctionTypeDeclaration(type: WasmFunctionType) {
         newLineList("type") {
             appendModuleFieldReference(type)
-            sameLineList("func") {
-                sameLineList("param") {
-                    type.parameterTypes.forEach { appendType(it) }
-                }
-                if (type.resultTypes.isNotEmpty()) {
-                    sameLineList("result") {
-                        type.resultTypes.forEach { appendType(it) }
+            maybeWrappingQualifier(emitSharedObjects, "shared") {
+                sameLineList("func") {
+                    sameLineList("param") {
+                        type.parameterTypes.forEach { appendType(it) }
+                    }
+                    if (type.resultTypes.isNotEmpty()) {
+                        sameLineList("result") {
+                            type.resultTypes.forEach { appendType(it) }
+                        }
                     }
                 }
             }
@@ -357,20 +360,34 @@ class WasmIrToText(
         newLineList("type") {
             appendModuleFieldReference(type)
             maybeSubType(type.superType?.owner) {
-                sameLineList("struct") {
-                    type.fields.forEach {
-                        appendStructField(it)
+                maybeWrappingQualifier(emitSharedObjects, "shared") {
+                    sameLineList("struct") {
+                        type.fields.forEach {
+                            appendStructField(it)
+                        }
                     }
                 }
             }
         }
     }
 
+    private fun maybeWrappingQualifier(flag: Boolean, qualifier: String, body: () -> Unit) {
+        if (flag) {
+            sameLineList(qualifier) {
+                body()
+            }
+        } else {
+            body()
+        }
+    }
+
     private fun appendArrayTypeDeclaration(type: WasmArrayDeclaration) {
         newLineList("type") {
             appendModuleFieldReference(type)
-            sameLineList("array") {
-                appendFieldType(type.field)
+            maybeWrappingQualifier(emitSharedObjects, "shared") {
+                sameLineList("array") {
+                    appendFieldType(type.field)
+                }
             }
         }
     }
