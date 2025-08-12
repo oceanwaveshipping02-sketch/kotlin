@@ -14,7 +14,7 @@ internal object IntrinsicEvaluator {
     private val fqNameToHandler: Map<String, IntrinsicBase> = buildMap {
         listOf(
             EmptyArray, ArrayOf, ArrayOfNulls, ArrayConstructor, EnumValues, EnumValueOf,
-            JsPrimitives, SourceLocation, AssertIntrinsic, DataClassArrayToString, Indent
+            JsPrimitives, SourceLocation, AssertIntrinsic, DataClassArrayToString
         ).forEach { intrinsic -> intrinsic.getListOfAcceptableFunctions().forEach { put(it, intrinsic) } }
     }
 

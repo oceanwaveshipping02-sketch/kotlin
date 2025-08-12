@@ -343,27 +343,3 @@ internal object DataClassArrayToString : IntrinsicBase() {
         environment.callStack.pushState(environment.convertToState(arrayToString(array.value), irFunction.returnType))
     }
 }
-
-internal object Indent : IntrinsicBase() {
-    override fun getListOfAcceptableFunctions(): List<String> {
-        return listOf(
-            "kotlin.text.StringsKt.trimIndent", "kotlin.text.trimIndent",
-            "kotlin.text.StringsKt.trimMargin", "kotlin.text.trimMargin",
-            "kotlin.text.StringsKt.trimMargin\$default", "kotlin.text.trimMargin\$default",
-        )
-    }
-
-    override fun evaluate(irFunction: IrFunction, environment: IrInterpreterEnvironment) {
-        val str = environment.callStack.loadState(irFunction.parameters[0].symbol).asString()
-        val trimmed = when (irFunction.fqName) {
-            "kotlin.text.StringsKt.trimIndent", "kotlin.text.trimIndent" -> str.trimIndent()
-            "kotlin.text.StringsKt.trimMargin", "kotlin.text.trimMargin" -> {
-                val marginPrefix = environment.callStack.loadState(irFunction.parameters[1].symbol).asString()
-                str.trimMargin(marginPrefix)
-            }
-            "kotlin.text.StringsKt.trimMargin\$default", "kotlin.text.trimMargin\$default" -> str.trimMargin()
-            else -> TODO("unknown trim function")
-        }
-        environment.callStack.pushState(environment.convertToState(trimmed, irFunction.returnType))
-    }
-}

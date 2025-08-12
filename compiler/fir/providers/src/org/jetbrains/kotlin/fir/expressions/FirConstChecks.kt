@@ -119,7 +119,7 @@ private class FirConstCheckVisitor(
             OperatorNameConventions.COMPARE_TO
         )
 
-        private val compileTimeExtensionFunctions = listOf("floorDiv", "mod", "code").mapTo(hashSetOf()) { Name.identifier(it) }
+        private val compileTimeExtensionFunctions = listOf("floorDiv", "mod", "code", "trim", "trimEnd", "trimIndent", "trimMargin", "trimStart").mapTo(hashSetOf()) { Name.identifier(it) }
     }
 
     private val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
@@ -498,7 +498,7 @@ private class FirConstCheckVisitor(
     }
 
     private fun FirCallableSymbol<*>?.fromKotlin(): Boolean {
-        return this?.callableId?.packageName?.asString() == "kotlin"
+        return this?.callableId?.packageName?.asString()?.startsWith("kotlin") ?: false
     }
 
     private fun FirCallableSymbol<*>?.getReferencedClassSymbol(): FirBasedSymbol<*>? =

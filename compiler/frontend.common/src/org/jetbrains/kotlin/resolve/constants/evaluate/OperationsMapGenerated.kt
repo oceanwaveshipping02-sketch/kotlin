@@ -105,6 +105,11 @@ fun evalUnaryOp(name: String, type: CompileTimeType, value: Any): Any? {
         STRING -> when (name) {
             "length" -> return (value as String).length
             "toString" -> return (value as String).toString()
+            "trim" -> return (value as String).trim()
+            "trimEnd" -> return (value as String).trimEnd()
+            "trimIndent" -> return (value as String).trimIndent()
+            "trimMargin" -> return (value as String).trimMargin()
+            "trimStart" -> return (value as String).trimStart()
         }
         else -> {}
     }
