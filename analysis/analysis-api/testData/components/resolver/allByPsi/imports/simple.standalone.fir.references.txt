@@ -57,7 +57,7 @@ KtNameReferenceExpression(182,186): 'util'
 
 KtNameReferenceExpression(187,196): 'ArrayList'
   KtSimpleNameReference:
-    (in java.util) open class ArrayList<E : kotlin.Any!> : java.util.AbstractList<E!>(), kotlin.collections.MutableList<E!>, java.util.RandomAccess, kotlin.Cloneable, java.io.Serializable
+    (in java.util) open class ArrayList<E : kotlin.Any!> : java.util.AbstractList<E!>(), java.util.RandomAccess, kotlin.Cloneable, java.io.Serializable, kotlin.collections.MutableList<E>
 
 KtNameReferenceExpression(204,208): 'java'
   KtSimpleNameReference:
@@ -69,7 +69,7 @@ KtNameReferenceExpression(209,213): 'util'
 
 KtNameReferenceExpression(214,221): 'HashMap'
   KtSimpleNameReference:
-    (in java.util) open class HashMap<K : kotlin.Any!, V : kotlin.Any!> : java.util.AbstractMap<K!, V!>(), kotlin.collections.MutableMap<K!, V!>, kotlin.Cloneable, java.io.Serializable
+    (in java.util) open class HashMap<K : kotlin.Any!, V : kotlin.Any!> : java.util.AbstractMap<K!, V!>(), kotlin.Cloneable, java.io.Serializable, kotlin.collections.MutableMap<K, V>
 
 KtNameReferenceExpression(229,233): 'java'
   KtSimpleNameReference:

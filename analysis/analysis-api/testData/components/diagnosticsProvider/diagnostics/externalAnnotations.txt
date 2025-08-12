@@ -1,2 +1,4 @@
 Diagnostics from file:
-  <NO DIAGNOSTICS>
+  for PSI element of type KtNameReferenceExpression at (9,11-14)
+    NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS      text ranges: [(179,182)]
+      PSI: KtNameReferenceExpression at (9,11-14)
