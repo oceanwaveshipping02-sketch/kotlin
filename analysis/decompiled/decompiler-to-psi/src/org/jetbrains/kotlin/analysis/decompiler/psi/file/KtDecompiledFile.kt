@@ -22,6 +22,11 @@ open class KtDecompiledFile(
     buildDecompiledText: (VirtualFile) -> DecompiledText
 ) : KtFile(provider, true) {
 
+    override fun getStub(): KotlinFileStub? = stubTree?.root?.let { it as KotlinFileStub }
+
+    override val greenStub: KotlinFileStub?
+        get() = greenStubTree?.root?.let { it as KotlinFileStub }
+
     private val decompiledText = LockedClearableLazyValue(Any()) {
         if (stubBasedDecompilerEnabled) {
             val stubTree = ClsClassFinder.allowMultifileClassPart {
