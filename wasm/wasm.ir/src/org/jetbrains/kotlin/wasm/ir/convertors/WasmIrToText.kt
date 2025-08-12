@@ -645,6 +645,7 @@ class WasmIrToText(
             stringBuilder.append(s)
             stringBuilder.append('"')
         } else {
+            stringBuilder.append(' ')
             stringBuilder.append(s.toByteArray().toWatData())
         }
     }
