@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.MetricContainer
 import org.jetbrains.kotlin.gradle.report.BuildMetricsService
 import javax.inject.Inject
 
+const val UNKNOWN_BUILD_ID = "unknown_id"
+fun Property<BuildUidService?>.getBuildId() = this.orNull?.buildId ?: UNKNOWN_BUILD_ID
+
 internal abstract class StatisticsBuildFlowManager @Inject constructor(
     private val flowScope: FlowScope,
     private val flowProviders: FlowProviders,
@@ -84,7 +87,7 @@ internal class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction.Paramete
     override fun execute(parameters: Parameters) {
         parameters.buildFusServiceProperty.orNull?.recordBuildFinished(
             parameters.buildFailed.get(),
-            parameters.buildUidServiceProperty.orNull?.buildId ?: "unknown_id",
+            parameters.buildUidServiceProperty.getBuildId(),
             parameters.buildFusServiceProperty.orNull?.parameters?.configurationMetrics?.orNull ?: emptyList()
         )
     }
@@ -108,7 +111,7 @@ internal class BuildFinishAndConfigurationTimeMetricsFlowAction : FlowAction<Bui
     override fun execute(parameters: Parameters) {
         parameters.buildFusServiceProperty.orNull?.recordBuildFinished(
             parameters.buildFailed.get(),
-            parameters.buildUidServiceProperty.orNull?.buildId ?: "unknown_id",
+            parameters.buildUidServiceProperty.getBuildId(),
             parameters.configurationTimeMetrics.get()
         )
     }

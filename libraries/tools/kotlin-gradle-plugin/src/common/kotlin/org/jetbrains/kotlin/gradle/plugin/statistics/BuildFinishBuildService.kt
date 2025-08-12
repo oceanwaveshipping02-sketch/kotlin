@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.logging.Errors
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.logging.reportToIde
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.UNKNOWN_BUILD_ID
 import org.jetbrains.kotlin.gradle.utils.kotlinErrorsDir
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import java.io.File
@@ -69,12 +70,41 @@ internal abstract class BuildFinishBuildService : BuildService<BuildFinishBuildS
             }
         }
 
+        private fun createFinishProfileFileForBuildWithUnknownID(
+            fusReportDirectory: File,
+            kotlinVersion: String,
+        ): Errors {
+            fusReportDirectory.listFiles()
+                .filter { it.name.startsWith(UNKNOWN_BUILD_ID) && it.name.endsWith("kotlin-profile") }
+                .forEach {
+                    val metricContainer = MetricsContainer()
+                    MetricsContainer.readFromFile(it) {
+                        metricContainer.populateFromMetricsContainer(it)
+                    }
+
+                    val fusFile = fusReportDirectory.resolve(it.name.replace(".kotlin-profile", ".profile"))
+
+                    if (!fusFile.createNewFile()) return@forEach
+
+                    fusFile.writer().buffered().use {
+                        it.appendLine("Kotlin version: $kotlinVersion")
+                        metricContainer.flush(it)
+                    }
+
+                    fusReportDirectory.resolve(it.name.replace(".kotlin-profile", ".finish-profile")).createNewFile()
+                }
+            return emptyList()
+        }
+
         internal fun collectAllFusReportsIntoOne(
             buildUid: String,
             fusReportDirectory: File,
             kotlinVersion: String,
             log: Logger,
         ): Errors {
+            if (buildUid == UNKNOWN_BUILD_ID)
+                return createFinishProfileFileForBuildWithUnknownID(fusReportDirectory, kotlinVersion)
+
             try {
                 val metricContainer = MetricsContainer()
 
