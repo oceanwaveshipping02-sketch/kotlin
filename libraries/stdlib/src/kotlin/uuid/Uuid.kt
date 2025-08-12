@@ -712,15 +712,15 @@ internal inline fun uuidParseHexDashCommonImpl(hexDashString: String, onError: (
 
     // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     // 16 hex digits fit into a Long
-    val part1 = hexDashString.parseHexToLong(startIndex = 0, endIndex = 8, expected = hexDigit, onError = onError)
+    val part1 = hexDashString.parseHexToLong(startIndex = 0, endIndex = 8) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(8, onError)
-    val part2 = hexDashString.parseHexToLong(startIndex = 9, endIndex = 13, expected = hexDigit, onError = onError)
+    val part2 = hexDashString.parseHexToLong(startIndex = 9, endIndex = 13) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(13, onError)
-    val part3 = hexDashString.parseHexToLong(startIndex = 14, endIndex = 18, expected = hexDigit, onError = onError)
+    val part3 = hexDashString.parseHexToLong(startIndex = 14, endIndex = 18) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(18, onError)
-    val part4 = hexDashString.parseHexToLong(startIndex = 19, endIndex = 23, expected = hexDigit, onError = onError)
+    val part4 = hexDashString.parseHexToLong(startIndex = 19, endIndex = 23) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(23, onError)
-    val part5 = hexDashString.parseHexToLong(startIndex = 24, endIndex = 36, expected = hexDigit, onError = onError)
+    val part5 = hexDashString.parseHexToLong(startIndex = 24, endIndex = 36) { onError(this, hexDigit, it) }
 
     val msb = (part1 shl 32) or (part2 shl 16) or part3
     val lsb = (part4 shl 48) or part5
@@ -751,27 +751,9 @@ internal fun uuidParseHexOrNullCommonImpl(hexString: String): Uuid? {
 @ExperimentalUuidApi
 internal inline fun uuidParseHexCommonImpl(hexString: String, onError: (String, String, Int) -> Nothing): Uuid {
     // 16 hex digits fit into a Long
-    val msb = hexString.parseHexToLong(startIndex = 0, endIndex = 16, "a hexadecimal digit", onError = onError)
-    val lsb = hexString.parseHexToLong(startIndex = 16, endIndex = 32, "a hexadecimal digit", onError = onError)
+    val msb = hexString.parseHexToLong(startIndex = 0, endIndex = 16) { onError(this, "a hexadecimal digit", it) }
+    val lsb = hexString.parseHexToLong(startIndex = 16, endIndex = 32) { onError(this, "a hexadecimal digit", it) }
     return Uuid.fromLongs(msb, lsb)
-}
-
-private inline fun String.parseHexToLong(
-    startIndex: Int,
-    endIndex: Int,
-    expected: String,
-    onError: (String, String, Int) -> Nothing
-): Long {
-    var result = 0L
-    for (index in startIndex until endIndex) {
-        val code = this[index].code
-        if (code ushr 8 == 0 && HEX_DIGITS_TO_LONG_DECIMAL[code] >= 0) {
-            result = result.shl(4).or(HEX_DIGITS_TO_LONG_DECIMAL[code])
-        } else {
-            onError(expected, this, index)
-        }
-    }
-    return result
 }
 
 private fun String.truncateForErrorMessage(maxLength: Int): String {

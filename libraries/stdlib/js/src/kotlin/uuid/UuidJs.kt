@@ -99,16 +99,16 @@ internal inline fun uuidParseHexDash(hexDashString: String, onError: (String, St
 
     // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     // 8 hex digits fit into an Int
-    val part1 = hexDashString.parseHexToInt(startIndex = 0, endIndex = 8, expected = hexDigit, onError = onError)
+    val part1 = hexDashString.parseHexToInt(startIndex = 0, endIndex = 8) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(8, onError)
-    val part2 = hexDashString.parseHexToInt(startIndex = 9, endIndex = 13, expected = hexDigit, onError = onError)
+    val part2 = hexDashString.parseHexToInt(startIndex = 9, endIndex = 13) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(13, onError)
-    val part3 = hexDashString.parseHexToInt(startIndex = 14, endIndex = 18, expected = hexDigit, onError = onError)
+    val part3 = hexDashString.parseHexToInt(startIndex = 14, endIndex = 18) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(18, onError)
-    val part4 = hexDashString.parseHexToInt(startIndex = 19, endIndex = 23, expected = hexDigit, onError = onError)
+    val part4 = hexDashString.parseHexToInt(startIndex = 19, endIndex = 23) { onError(this, hexDigit, it) }
     hexDashString.uuidCheckHyphenAt(23, onError)
-    val part5a = hexDashString.parseHexToInt(startIndex = 24, endIndex = 28, expected = hexDigit, onError = onError)
-    val part5b = hexDashString.parseHexToInt(startIndex = 28, endIndex = 36, expected = hexDigit, onError = onError)
+    val part5a = hexDashString.parseHexToInt(startIndex = 24, endIndex = 28) { onError(this, hexDigit, it) }
+    val part5b = hexDashString.parseHexToInt(startIndex = 28, endIndex = 36) { onError(this, hexDigit, it) }
 
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val msb = Long(
@@ -128,7 +128,7 @@ internal inline fun uuidParseHexDash(hexDashString: String, onError: (String, St
 @ExperimentalUuidApi
 internal actual fun uuidParseHex(hexString: String): Uuid {
     return uuidParseHex(hexString) { expectation, string, index ->
-        throw IllegalArgumentException("Expected $expectation at index $index, but was '${string[index]}'")
+        uuidThrowUnexpectedCharacterException(expectation, string, index)
     }
 }
 
@@ -145,27 +145,14 @@ private inline fun uuidParseHex(hexString: String, onError: (String, String, Int
     // 8 hex digits fit into an Int
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val msb = Long(
-        high = hexString.parseHexToInt(startIndex = 0, endIndex = 8, "a hexadecimal digit", onError),
-        low = hexString.parseHexToInt(startIndex = 8, endIndex = 16, "a hexadecimal digit", onError)
+        high = hexString.parseHexToInt(startIndex = 0, endIndex = 8) { onError(this, "a hexadecimal digit", it) },
+        low = hexString.parseHexToInt(startIndex = 8, endIndex = 16) { onError(this, "a hexadecimal digit", it) }
     )
 
     @OptIn(BoxedLongApi::class) // Long constructor is intrinsified when BigInt-backed Longs are enabled.
     val lsb = Long(
-        high = hexString.parseHexToInt(startIndex = 16, endIndex = 24, "a hexadecimal digit", onError),
-        low = hexString.parseHexToInt(startIndex = 24, endIndex = 32, "a hexadecimal digit", onError)
+        high = hexString.parseHexToInt(startIndex = 16, endIndex = 24) { onError(this, "a hexadecimal digit", it) },
+        low = hexString.parseHexToInt(startIndex = 24, endIndex = 32) { onError(this, "a hexadecimal digit", it) }
     )
     return Uuid.fromLongs(msb, lsb)
-}
-
-private inline fun String.parseHexToInt(startIndex: Int, endIndex: Int, expected: String, onError: (String, String, Int) -> Nothing): Int {
-    var result = 0
-    for (index in startIndex until endIndex) {
-        val code = this[index].code
-        if (code ushr 8 == 0 && HEX_DIGITS_TO_DECIMAL[code] >= 0) {
-            result = result.shl(4).or(HEX_DIGITS_TO_DECIMAL[code])
-        } else {
-            onError(expected, this, index)
-        }
-    }
-    return result
 }
