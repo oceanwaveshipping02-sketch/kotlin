@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     id("compiler-tests-convention")
+    id("java-test-fixtures")
 }
 
 dependencies {
@@ -8,12 +9,13 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
 
+    testFixturesImplementation(testFixtures(project(":native:native.tests")))
     testImplementation(testFixtures(project(":native:native.tests")))
-    testImplementation(testFixtures(project(":native:native.tests:gc-fuzzing-tests:engine")))
 }
 
 sourceSets {
     "main" { none() }
+    "testFixtures" { projectDefault() }
     "test" {
         projectDefault()
         generatedTestDir()
@@ -31,9 +33,5 @@ nativeTest(
 ) {
     // nativeTest sets workingDir to rootDir so here we need to override it
     workingDir = projectDir
-
-    project.findProperty("gcfuzzing.binary")?.let {
-        systemProperty("gcfuzzing.id", it)
-    }
-    systemProperty("gcfuzzing.timelimit", project.findProperty("gcfuzzing.timelimit") ?: "1h")
 }
+
