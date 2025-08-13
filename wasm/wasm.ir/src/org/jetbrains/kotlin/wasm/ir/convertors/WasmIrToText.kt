@@ -558,7 +558,7 @@ class WasmIrToText(
     fun appendHeapType(type: WasmHeapType) {
         when (type) {
             is WasmHeapType.Simple ->
-                appendElement(type.name)
+                maybeShared(emitSharedObjects) { appendElement(type.name) }
 
             is WasmHeapType.Type -> {
 //                appendElement("opt")
@@ -592,7 +592,10 @@ class WasmIrToText(
             }
 
             else ->
-                appendElement(type.name)
+                if (type.isInternalRefType())
+                    maybeShared(emitSharedObjects) { appendElement(type.name) }
+                else
+                    appendElement(type.name)
         }
     }
 
