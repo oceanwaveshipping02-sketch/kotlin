@@ -73,6 +73,15 @@ public interface WasmArguments : CommonKlibBasedArguments {
     public val X_WASM_DEBUG_FRIENDLY: WasmArgument<Boolean> = WasmArgument("X_WASM_DEBUG_FRIENDLY")
 
     /**
+     * Compile only provided .wasm module.
+     *
+     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
+     */
+    @JvmField
+    @ExperimentalCompilerArgument
+    public val X_WASM_SINGLE_MODULE: WasmArgument<String?> = WasmArgument("X_WASM_SINGLE_MODULE")
+
+    /**
      * Generate a .wat file.
      *
      * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.

@@ -50,6 +50,16 @@ abstract class K2WasmCompilerArguments : CommonKlibBasedCompilerArguments() {
         }
 
     @Argument(
+        value = "-Xwasm-single-module",
+        description = "Compile only provided .wasm module.",
+    )
+    var wasmSingleModule: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
+    @Argument(
         value = "-Xwasm-generate-wat",
         description = "Generate a .wat file.",
     )

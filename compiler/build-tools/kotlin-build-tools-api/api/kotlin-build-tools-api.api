@@ -550,6 +550,7 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/arguments/Wa
 	public static final field X_WASM_KCLASS_FQN Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
 	public static final field X_WASM_NO_JSTAG Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
 	public static final field X_WASM_PRESERVE_IC_ORDER Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
+	public static final field X_WASM_SINGLE_MODULE Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
 	public static final field X_WASM_SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_SOURCES Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
 	public static final field X_WASM_TARGET Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;
 	public static final field X_WASM_USE_NEW_EXCEPTION_PROPOSAL Lorg/jetbrains/kotlin/buildtools/api/arguments/WasmArguments$WasmArgument;

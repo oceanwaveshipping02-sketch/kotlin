@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_W
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_KCLASS_FQN
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_NO_JSTAG
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_PRESERVE_IC_ORDER
+import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_SINGLE_MODULE
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_SOURCE_MAP_INCLUDE_MAPPINGS_FROM_UNAVAILABLE_SOURCES
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_TARGET
 import org.jetbrains.kotlin.buildtools.api.arguments.WasmArguments.Companion.X_WASM_USE_NEW_EXCEPTION_PROPOSAL
@@ -63,6 +64,7 @@ internal open class WasmArgumentsImpl : CommonKlibBasedArgumentsImpl(), WasmArgu
     if ("X_WASM_TARGET" in optionsMap) { arguments.wasmTarget = get(X_WASM_TARGET) }
     if ("X_WASM_DEBUG_INFO" in optionsMap) { arguments.wasmDebug = get(X_WASM_DEBUG_INFO) }
     if ("X_WASM_DEBUG_FRIENDLY" in optionsMap) { arguments.forceDebugFriendlyCompilation = get(X_WASM_DEBUG_FRIENDLY) }
+    if ("X_WASM_SINGLE_MODULE" in optionsMap) { arguments.wasmSingleModule = get(X_WASM_SINGLE_MODULE) }
     if ("X_WASM_GENERATE_WAT" in optionsMap) { arguments.wasmGenerateWat = get(X_WASM_GENERATE_WAT) }
     if ("X_WASM_KCLASS_FQN" in optionsMap) { arguments.wasmKClassFqn = get(X_WASM_KCLASS_FQN) }
     if ("X_WASM_ENABLE_ARRAY_RANGE_CHECKS" in optionsMap) { arguments.wasmEnableArrayRangeChecks = get(X_WASM_ENABLE_ARRAY_RANGE_CHECKS) }
@@ -98,6 +100,8 @@ internal open class WasmArgumentsImpl : CommonKlibBasedArgumentsImpl(), WasmArgu
     public val X_WASM_DEBUG_INFO: WasmArgument<Boolean> = WasmArgument("X_WASM_DEBUG_INFO")
 
     public val X_WASM_DEBUG_FRIENDLY: WasmArgument<Boolean> = WasmArgument("X_WASM_DEBUG_FRIENDLY")
+
+    public val X_WASM_SINGLE_MODULE: WasmArgument<String?> = WasmArgument("X_WASM_SINGLE_MODULE")
 
     public val X_WASM_GENERATE_WAT: WasmArgument<Boolean> = WasmArgument("X_WASM_GENERATE_WAT")
 
