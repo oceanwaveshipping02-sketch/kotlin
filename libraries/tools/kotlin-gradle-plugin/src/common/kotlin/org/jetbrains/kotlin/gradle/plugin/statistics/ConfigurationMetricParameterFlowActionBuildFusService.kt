@@ -17,15 +17,13 @@ abstract class ConfigurationMetricParameterFlowActionBuildFusService() : BuildFu
             project: Project,
             buildUidService: Provider<BuildUidService>,
             generalConfigurationMetricsProvider: Provider<MetricContainer>,
+            kotlinVersion: String
         ): Provider<ConfigurationMetricParameterFlowActionBuildFusService> {
             return project.gradle.sharedServices.registerIfAbsent(
                 serviceName,
                 ConfigurationMetricParameterFlowActionBuildFusService::class.java
             ) { spec ->
-                spec.parameters.generalConfigurationMetrics.set(generalConfigurationMetricsProvider)
-                spec.parameters.generalMetricsFinalized.set(false)
-                spec.parameters.buildStatisticsConfiguration.set(KotlinBuildStatsConfiguration(project))
-                spec.parameters.buildId.value(buildUidService.map { it.buildId }).disallowChanges()
+                spec.parameters.setBuildFusServiceCommonParameters(project, buildUidService, generalConfigurationMetricsProvider, kotlinVersion)
                 //init value to avoid `java.lang.IllegalStateException: GradleScopeServices has been closed` exception on close
                 spec.parameters.configurationMetrics.add(MetricContainer())
             }.also {

@@ -77,9 +77,6 @@ internal class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction.Paramete
         @get:ServiceReference
         val buildFusServiceProperty: Property<ConfigurationMetricParameterFlowActionBuildFusService>
 
-        @get:ServiceReference
-        val buildUidServiceProperty: Property<BuildUidService?>
-
         @get:Input
         val buildFailed: Property<Boolean>
     }
@@ -87,7 +84,6 @@ internal class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction.Paramete
     override fun execute(parameters: Parameters) {
         parameters.buildFusServiceProperty.orNull?.recordBuildFinished(
             parameters.buildFailed.get(),
-            parameters.buildUidServiceProperty.getBuildId(),
             parameters.buildFusServiceProperty.orNull?.parameters?.configurationMetrics?.orNull ?: emptyList()
         )
     }
@@ -97,9 +93,6 @@ internal class BuildFinishAndConfigurationTimeMetricsFlowAction : FlowAction<Bui
     interface Parameters : FlowParameters {
         @get:ServiceReference
         val buildFusServiceProperty: Property<FlowActionBuildFusService>
-
-        @get:ServiceReference
-        val buildUidServiceProperty: Property<BuildUidService?>
 
         @get:Input
         val buildFailed: Property<Boolean>
@@ -111,7 +104,6 @@ internal class BuildFinishAndConfigurationTimeMetricsFlowAction : FlowAction<Bui
     override fun execute(parameters: Parameters) {
         parameters.buildFusServiceProperty.orNull?.recordBuildFinished(
             parameters.buildFailed.get(),
-            parameters.buildUidServiceProperty.getBuildId(),
             parameters.configurationTimeMetrics.get()
         )
     }

@@ -580,7 +580,7 @@ class FusStatisticsIT : KGPBaseTest() {
     @GradleTest
     @NativeGradlePluginTests
     @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
+        minVersion = TestVersions.Gradle.G_8_2,
     )
     fun testNativeCompilerArguments(gradleVersion: GradleVersion) {
         nativeProject("native-incremental-simple", gradleVersion) {
@@ -598,7 +598,8 @@ class FusStatisticsIT : KGPBaseTest() {
             )
 
             assertNoErrorFilesCreated {
-                build("linkDebugExecutableHost", "-Pkotlin.session.logger.root.path=$projectPath") {
+                build("linkDebugExecutableHost", "--stacktrace","-Pkotlin.session.logger.root.path=$projectPath",  buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.INFO)) {
+                    println(output)
                     assertOutputDoesNotContainFusErrors()
                     fusStatisticsDirectory.assertFusReportContains("ENABLED_NOOP_GC=true")
                 }
@@ -692,35 +693,37 @@ class FusStatisticsIT : KGPBaseTest() {
     @GradleTest
     @JvmGradlePluginTests
     @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_8_2,
+        minVersion = TestVersions.Gradle.G_8_14,
     )
     fun concurrencyModificationExceptionTest(gradleVersion: GradleVersion) {
         val rounds = 100
-        //TODO KT-79408 fix finish file already exists error
+
         project(
             "multiClassloaderProject", gradleVersion,
         ) {
-            repeat(rounds) {
-                build(
-                    "compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath", "-Dorg.gradle.parallel=true",
-                    buildOptions = defaultBuildOptions.copy(
-                        buildReport = listOf(BuildReportType.FILE),
-                        isolatedProjects = IsolatedProjectsMode.ENABLED,
-                    ),
-                ) {
-                    assertOutputDoesNotContain("BuildFusService was not registered")
-                    assertOutputDoesNotContainFusErrors()
+            assertNoErrorFilesCreated {
+                repeat(rounds) {
+                    build(
+                        "compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath", "-Dorg.gradle.parallel=true",
+                        buildOptions = defaultBuildOptions.copy(
+                            buildReport = listOf(BuildReportType.FILE),
+                            isolatedProjects = IsolatedProjectsMode.ENABLED,
+                        ),
+                    ) {
+                        assertOutputDoesNotContain("BuildFusService was not registered")
+                        assertOutputDoesNotContainFusErrors()
+                    }
+
+                    build("clean", buildOptions = buildOptions)
                 }
 
-                build("clean", buildOptions = buildOptions)
+                assertEquals(getExpectedFusFilesCount(gradleVersion, rounds), fusStatisticsDirectory.filterKotlinFusFiles().size)
+
+                fusStatisticsDirectory.assertFusReportContains(
+                    "CONFIGURATION_IMPLEMENTATION_COUNT",
+                    "NUMBER_OF_SUBPROJECTS",
+                )
             }
-
-            assertEquals(getExpectedFusFilesCount(gradleVersion, rounds), fusStatisticsDirectory.filterKotlinFusFiles().size)
-
-            fusStatisticsDirectory.assertFusReportContains(
-                "CONFIGURATION_IMPLEMENTATION_COUNT",
-                "NUMBER_OF_SUBPROJECTS",
-            )
         }
     }
 

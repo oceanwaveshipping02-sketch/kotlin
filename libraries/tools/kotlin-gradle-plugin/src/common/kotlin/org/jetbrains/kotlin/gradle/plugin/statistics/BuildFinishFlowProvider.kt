@@ -10,24 +10,30 @@ import org.gradle.api.flow.FlowAction
 import org.gradle.api.flow.FlowParameters
 import org.gradle.api.flow.FlowProviders
 import org.gradle.api.flow.FlowScope
-import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
 import org.gradle.api.services.ServiceReference
 import org.gradle.api.tasks.Input
 import javax.inject.Inject
 
-abstract class BuildFinishFlowProviderManager @Inject constructor(
+abstract class BuildFusFlowProviderManager @Inject constructor(
     private val flowScope: FlowScope,
     private val flowProviders: FlowProviders,
 ) {
     companion object {
         internal fun getInstance(project: Project) =
-            project.objects.newInstance(BuildFinishFlowProviderManager::class.java)
+            project.objects.newInstance(BuildFusFlowProviderManager::class.java)
     }
 
-    internal fun subscribeForBuildResults() {
+    internal fun subscribeWithFlowActionBuildFusService() {
         flowScope.always(
             BuildFinishFlowAction::class.java
+        ) { spec ->
+            spec.parameters.buildFailed.set(flowProviders.buildWorkResult.map { it.failure.isPresent })
+        }
+    }
+    internal fun subscribeWithConfigurationMetricParameterFlowActionBuildFusService() {
+        flowScope.always(
+            BuildFinishForConfigurationMetricParameterFlowAction::class.java
         ) { spec ->
             spec.parameters.buildFailed.set(flowProviders.buildWorkResult.map { it.failure.isPresent })
         }
@@ -41,7 +47,22 @@ internal abstract class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction
         val buildFailed: Property<Boolean>
 
         @get:ServiceReference
-        val fusBuildFinishServiceProperty: Property<BuildFinishBuildService>
+        val fusBuildFinishServiceProperty: Property<FlowActionBuildFusService>
+    }
+
+    override fun execute(parameters: Parameters) {
+        parameters.fusBuildFinishServiceProperty.orNull?.collectAllFusReportsIntoOne()
+    }
+}
+
+internal abstract class BuildFinishForConfigurationMetricParameterFlowAction : FlowAction<BuildFinishForConfigurationMetricParameterFlowAction.Parameters> {
+
+    interface Parameters : FlowParameters {
+        @get:Input
+        val buildFailed: Property<Boolean>
+
+        @get:ServiceReference
+        val fusBuildFinishServiceProperty: Property<ConfigurationMetricParameterFlowActionBuildFusService>
     }
 
     override fun execute(parameters: Parameters) {

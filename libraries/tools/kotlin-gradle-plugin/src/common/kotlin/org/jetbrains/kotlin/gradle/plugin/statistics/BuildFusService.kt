@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.gradle.plugin.statistics
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
@@ -22,7 +24,10 @@ import org.jetbrains.kotlin.gradle.fus.BuildUidService
 import org.jetbrains.kotlin.gradle.fus.internal.detectedCiProperty
 import org.jetbrains.kotlin.gradle.fus.internal.isCiBuild
 import org.jetbrains.kotlin.gradle.internal.isInIdeaSync
+import org.jetbrains.kotlin.gradle.logging.Errors
+import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
+import org.jetbrains.kotlin.gradle.logging.reportToIde
 import org.jetbrains.kotlin.gradle.plugin.BuildEventsListenerRegistryHolder
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.internal.isConfigurationCacheRequested
@@ -32,11 +37,16 @@ import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.report.reportingSettings
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleActionPerProject
+import org.jetbrains.kotlin.gradle.utils.kotlinErrorsDir
+import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StatisticsValuesConsumer
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
+import java.io.File
 import java.io.Serializable
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.isNotEmpty
 
 
 internal interface UsesBuildFusService : Task {
@@ -50,9 +60,11 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
     protected var buildFailed: Boolean = false
     internal val log = Logging.getLogger(this.javaClass)
     protected val buildId = parameters.buildId.get()
+    private val errorWasReported = AtomicBoolean(false)
 
     init {
         log.kotlinDebug("Initialize ${this.javaClass.simpleName}")
+        log.info("Build service ${serviceName} init for build $buildId")
         KotlinBuildStatsBeanService.recordBuildStart(buildId)
     }
 
@@ -61,6 +73,10 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
         val generalConfigurationMetrics: Property<MetricContainer>
         val buildStatisticsConfiguration: Property<KotlinBuildStatsConfiguration>
         val buildId: Property<String>
+        val kotlinVersion: Property<String>
+        val errorDirs: ListProperty<File>
+
+        val fusReportDirectory: Property<File>
     }
 
     private val fusMetricsConsumer = SynchronizedMetricsContainer()
@@ -118,7 +134,7 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
 
         private fun registerIfAbsentImpl(
             project: Project,
-            pluginVersion: String,
+            kotlinPluginVersion: String,
             buildUidService: Provider<BuildUidService>,
         ): Provider<out BuildFusService<out Parameters>> {
 
@@ -144,7 +160,7 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
                     project,
                     gradle,
                     buildReportOutputs,
-                    pluginVersion,
+                    kotlinPluginVersion,
                     isProjectIsolationEnabled,
                     isProjectIsolationRequested,
                     isConfigurationCacheRequested
@@ -155,15 +171,30 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
             // when this OperationCompletionListener is called services can be already closed for Gradle 8,
             // so there is a change that no VariantImplementationFactory will be found
             val fusService = if (GradleVersion.current().baseVersion >= GradleVersion.version("8.9")) {
-                FlowActionBuildFusService.registerIfAbsentImpl(project, buildUidService, generalConfigurationMetricsProvider)
+                FlowActionBuildFusService.registerIfAbsentImpl(
+                    project,
+                    buildUidService,
+                    generalConfigurationMetricsProvider,
+                    kotlinPluginVersion
+                ).also {
+                    BuildFusFlowProviderManager.getInstance(project).subscribeWithFlowActionBuildFusService()
+                }
             } else if (GradleVersion.current().baseVersion >= GradleVersion.version("8.1")) {
                 ConfigurationMetricParameterFlowActionBuildFusService.registerIfAbsentImpl(
                     project,
                     buildUidService,
-                    generalConfigurationMetricsProvider
-                )
+                    generalConfigurationMetricsProvider,
+                    kotlinPluginVersion
+                ).also {
+                    BuildFusFlowProviderManager.getInstance(project).subscribeWithConfigurationMetricParameterFlowActionBuildFusService()
+                }
             } else {
-                CloseActionBuildFusService.registerIfAbsentImpl(project, buildUidService, generalConfigurationMetricsProvider, pluginVersion)
+                CloseActionBuildFusService.registerIfAbsentImpl(
+                    project,
+                    buildUidService,
+                    generalConfigurationMetricsProvider,
+                    kotlinPluginVersion
+                )
             }
             //DO NOT call buildService.get() before all parameters.configurationMetrics are set.
             // buildService.get() call will cause parameters calculation and configuration cache storage.
@@ -171,6 +202,44 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
             BuildEventsListenerRegistryHolder.getInstance(project).listenerRegistry.onTaskCompletion(fusService)
 
             return fusService
+        }
+
+        internal fun collectAllFusReportsIntoOne(
+            buildUid: String,
+            fusReportDirectory: File,
+            kotlinVersion: String,
+            log: Logger,
+        ): Errors {
+            log.info("Build service ${serviceName} internal collectAllFusReportsIntoOne for build $buildUid")
+            try {
+                val metricContainer = MetricsContainer()
+
+                fusReportDirectory.listFiles()
+                    .filter { it.name.startsWith(buildUid) && (it.name.endsWith("plugin-profile") || it.name.endsWith("kotlin-profile")) }
+                    .forEach {
+                        MetricsContainer.readFromFile(it) {
+                            metricContainer.populateFromMetricsContainer(it)
+                        }
+                    }
+
+                val fusFile = fusReportDirectory.resolve("$buildUid.profile")
+                fusFile.writer().buffered().use {
+                    it.appendLine("Build: $buildUid")
+                    it.appendLine("Kotlin version: $kotlinVersion")
+                    metricContainer.flush(it)
+                }
+
+                if (!fusReportDirectory.resolve("$buildUid.finish-profile").createNewFile()) {
+                    log.debug("File $fusReportDirectory/$buildUid.finish-profile already exists")
+                    return listOf("File $fusReportDirectory/$buildUid.finish-profile already exists")
+                }
+
+            } catch (e: Exception) {
+                log.debug("Unable to collect finish file for build $buildUid: ${e.message}")
+                return listOf("Error while creating finish file: ${e.message}" + e.stackTrace.joinToString("\n"))
+            }
+            log.debug("Single fus file was created for build $buildUid ")
+            return emptyList()
         }
     }
 
@@ -197,9 +266,11 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
     override fun close() {
         KotlinBuildStatsBeanService.closeServices()
         log.kotlinDebug("Close ${this.javaClass.simpleName}")
+        log.info("Build service ${serviceName} close for build $buildId")
     }
 
-    internal fun recordBuildFinished(buildFailed: Boolean, buildId: String, configurationMetrics: List<MetricContainer>) {
+    internal fun recordBuildFinished(buildFailed: Boolean, configurationMetrics: List<MetricContainer>) {
+        log.info("Build service ${serviceName} recordBuildFinished for build $buildId")
         BuildFinishMetrics.collectMetrics(log, buildFailed, buildStartTime, projectEvaluatedTime, fusMetricsConsumer)
         configurationMetrics.forEach { it.addToConsumer(fusMetricsConsumer) }
         parameters.generalConfigurationMetrics.orNull?.addToConsumer(fusMetricsConsumer)
@@ -209,6 +280,28 @@ abstract class BuildFusService<T : BuildFusService.Parameters> :
             loggerService.reportBuildFinished(fusMetricsConsumer)
         }
     }
+
+    internal fun collectAllFusReportsIntoOne() {
+        log.info("Build service ${serviceName} collectAllFusReportsIntoOne for build $buildId")
+        val errorMessages = collectAllFusReportsIntoOne(
+            buildId,
+            parameters.fusReportDirectory.get(),
+            parameters.kotlinVersion.get(),
+            log
+        )
+
+        //KT-79408 skip reporting to IDE if there is already a reported fus related error file with the same buildId
+        if (errorMessages.isNotEmpty()) {
+            if (errorWasReported.compareAndSet(false, true)) {
+                errorMessages.reportToIde(
+                    parameters.errorDirs.get().map { it.errorFile() }, parameters.kotlinVersion.get(), buildId,
+                    GradleKotlinLogger(log)
+                )
+            }
+        }
+    }
+
+    private fun File.errorFile() = resolve("errors-$buildId-${System.currentTimeMillis()}.log")
 }
 
 class MetricContainer : Serializable {
@@ -243,4 +336,27 @@ internal fun BuildFusService.Parameters.finalizeGeneralConfigurationMetrics() {
         generalMetricsFinalized.set(true)
         generalConfigurationMetrics.finalizeValue()
     }
+}
+
+private fun BuildFusService.Parameters.setErrorDirs(project: Project) {
+    errorDirs.add(project.kotlinErrorsDir)
+    if (!project.kotlinPropertiesProvider.kotlinProjectPersistentDirGradleDisableWrite) {
+        errorDirs.add(project.rootDir.resolve(".gradle/kotlin/errors/"))
+    }
+    errorDirs.disallowChanges()
+}
+
+internal fun BuildFusService.Parameters.setBuildFusServiceCommonParameters(
+    project: Project,
+    buildUidService: Provider<BuildUidService>,
+    generalConfigurationMetricsProvider: Provider<MetricContainer>,
+    kotlinPluginVersion: String,
+) {
+    generalConfigurationMetrics.set(generalConfigurationMetricsProvider)
+    generalMetricsFinalized.set(false)
+    buildStatisticsConfiguration.set(KotlinBuildStatsConfiguration(project))
+    buildId.value(buildUidService.map { it.buildId }).disallowChanges()
+    kotlinVersion.value(kotlinPluginVersion).disallowChanges()
+    setErrorDirs(project)
+    fusReportDirectory.value(project.getFusDirectoryFromPropertyService()).disallowChanges()
 }
