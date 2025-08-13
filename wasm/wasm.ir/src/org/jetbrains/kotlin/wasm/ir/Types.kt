@@ -82,6 +82,17 @@ fun WasmType.getHeapType(): WasmHeapType =
         else -> error("Unknown heap type for type $this")
     }
 
+fun WasmType.isInternalRefType() = when (this) {
+    is WasmAnyRef -> true
+    is WasmEqRef -> true
+    is WasmFuncRef -> true
+    is WasmExternRef -> true
+    // TODO decide later
+    is WasmRefNullrefType -> false
+    is WasmRefNullExternrefType -> false
+    else -> false
+}
+
 fun WasmFunctionType.referencesTypeDeclarations(): Boolean =
     parameterTypes.any { it.referencesTypeDeclaration() } or resultTypes.any { it.referencesTypeDeclaration() }
 
