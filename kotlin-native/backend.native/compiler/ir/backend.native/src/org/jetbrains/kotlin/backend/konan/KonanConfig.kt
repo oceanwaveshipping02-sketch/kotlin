@@ -297,7 +297,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     val genericSafeCasts: Boolean by lazy {
         configuration.get(BinaryOptions.genericSafeCasts)
-                ?: false // For now disabled by default due to performance penalty.
+                ?: !optimizationsEnabled // For now disabled in -opt due to performance penalty.
     }
 
     internal val defaultPagedAllocator: Boolean get() = sanitizer == null
@@ -497,6 +497,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             append("-check_state_at_external_calls")
         if (stackProtectorMode != StackProtectorMode.NO)
             append("-stack_protector${stackProtectorMode.name}")
+        if (genericSafeCasts)
+            append("-generic_safe_casts")
     }
 
     private val systemCacheFlavorString = buildString {
