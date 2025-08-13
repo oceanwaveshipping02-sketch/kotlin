@@ -329,7 +329,7 @@ class WasmIrToText(
     private fun appendFunctionTypeDeclaration(type: WasmFunctionType) {
         newLineList("type") {
             appendModuleFieldReference(type)
-            maybeWrappingQualifier(emitSharedObjects, "shared") {
+            maybeShared(emitSharedObjects) {
                 sameLineList("func") {
                     sameLineList("param") {
                         type.parameterTypes.forEach { appendType(it) }
@@ -360,7 +360,7 @@ class WasmIrToText(
         newLineList("type") {
             appendModuleFieldReference(type)
             maybeSubType(type.superType?.owner) {
-                maybeWrappingQualifier(emitSharedObjects, "shared") {
+                maybeShared(emitSharedObjects) {
                     sameLineList("struct") {
                         type.fields.forEach {
                             appendStructField(it)
@@ -371,12 +371,11 @@ class WasmIrToText(
         }
     }
 
-    private fun maybeWrappingQualifier(flag: Boolean, qualifier: String, body: () -> Unit) {
-        if (flag) {
-            sameLineList(qualifier) {
-                body()
-            }
-        } else {
+    private fun maybeShared(isShared: Boolean, body: () -> Unit) =
+        if (isShared) shared { body() } else body
+
+    private fun shared(body: () -> Unit) {
+        sameLineList("shared") {
             body()
         }
     }
@@ -384,7 +383,7 @@ class WasmIrToText(
     private fun appendArrayTypeDeclaration(type: WasmArrayDeclaration) {
         newLineList("type") {
             appendModuleFieldReference(type)
-            maybeWrappingQualifier(emitSharedObjects, "shared") {
+            maybeShared(emitSharedObjects) {
                 sameLineList("array") {
                     appendFieldType(type.field)
                 }
