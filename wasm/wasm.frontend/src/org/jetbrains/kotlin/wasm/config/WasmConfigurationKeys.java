@@ -41,4 +41,7 @@ public class WasmConfigurationKeys {
 
     public static final CompilerConfigurationKey<Boolean> WASM_FORCE_DEBUG_FRIENDLY_COMPILATION =
             CompilerConfigurationKey.create("avoid optimizations that can break debugging.");
+
+    public static final CompilerConfigurationKey<String> SINGLE_MODULE =
+            CompilerConfigurationKey.create("compile single module.");
 }

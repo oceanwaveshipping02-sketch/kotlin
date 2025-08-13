@@ -25,6 +25,7 @@ fun copyK2WasmCompilerArguments(from: K2WasmCompilerArguments, to: K2WasmCompile
     to.wasmGenerateWat = from.wasmGenerateWat
     to.wasmKClassFqn = from.wasmKClassFqn
     to.wasmNoJsTag = from.wasmNoJsTag
+    to.wasmSingleModule = from.wasmSingleModule
     to.wasmTarget = from.wasmTarget
     to.wasmUseNewExceptionProposal = from.wasmUseNewExceptionProposal
     to.wasmUseTrapsInsteadOfExceptions = from.wasmUseTrapsInsteadOfExceptions
