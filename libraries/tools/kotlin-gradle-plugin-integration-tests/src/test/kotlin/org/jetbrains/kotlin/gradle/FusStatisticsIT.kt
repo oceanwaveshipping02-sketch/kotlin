@@ -580,7 +580,7 @@ class FusStatisticsIT : KGPBaseTest() {
     @GradleTest
     @NativeGradlePluginTests
     @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_8_2,
+        additionalVersions = [TestVersions.Gradle.G_8_2],
     )
     fun testNativeCompilerArguments(gradleVersion: GradleVersion) {
         nativeProject("native-incremental-simple", gradleVersion) {
@@ -598,8 +598,7 @@ class FusStatisticsIT : KGPBaseTest() {
             )
 
             assertNoErrorFilesCreated {
-                build("linkDebugExecutableHost", "--stacktrace","-Pkotlin.session.logger.root.path=$projectPath",  buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.INFO)) {
-                    println(output)
+                build("linkDebugExecutableHost", "-Pkotlin.session.logger.root.path=$projectPath") {
                     assertOutputDoesNotContainFusErrors()
                     fusStatisticsDirectory.assertFusReportContains("ENABLED_NOOP_GC=true")
                 }
@@ -693,7 +692,7 @@ class FusStatisticsIT : KGPBaseTest() {
     @GradleTest
     @JvmGradlePluginTests
     @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_8_14,
+        minVersion = TestVersions.Gradle.G_8_2,
     )
     fun concurrencyModificationExceptionTest(gradleVersion: GradleVersion) {
         val rounds = 100
