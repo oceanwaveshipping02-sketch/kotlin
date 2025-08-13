@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.name.StandardClassIds.BASE_KOTLIN_PACKAGE
 abstract class BaseSymbolsImpl(val irBuiltIns: IrBuiltIns) {
     protected val symbolFinder = irBuiltIns.symbolFinder
 
+    // TODO KT-79436 unify backend specific functions and remove the old ones
     protected fun findSharedVariableBoxClass(primitiveType: PrimitiveType?): FrontendKlibSymbols.SharedVariableBoxClassInfo {
         val suffix = primitiveType?.typeName?.asString() ?: ""
         val classId = ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SharedVariableBox$suffix"))
