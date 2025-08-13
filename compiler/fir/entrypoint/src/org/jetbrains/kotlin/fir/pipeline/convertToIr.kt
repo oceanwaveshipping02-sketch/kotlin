@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.pipeline.Fir2IrPipeline.IrVerificationSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
@@ -93,11 +94,15 @@ fun FirResult.convertToIrAndActualize(
     commonMemberStorage: Fir2IrCommonMemberStorage = Fir2IrCommonMemberStorage(),
     irModuleFragmentPostCompute: (IrModuleFragment) -> Unit = { _ -> },
 ): Fir2IrActualizedResult {
+    val irVerificationSettings = IrVerificationSettings(
+        mode = compilerConfiguration.get(CommonConfigurationKeys.VERIFY_IR, IrVerificationMode.NONE),
+        enableIrVisibilityChecks = compilerConfiguration.enableIrVisibilityChecks,
+        enableIrVarargTypesChecks = compilerConfiguration.enableIrVarargTypesChecks,
+    )
     val pipeline = Fir2IrPipeline(
         outputs,
         fir2IrExtensions,
         fir2IrConfiguration,
-        compilerConfiguration,
         irGeneratorExtensions,
         irMangler,
         visibilityConverter,
@@ -106,7 +111,8 @@ fun FirResult.convertToIrAndActualize(
         specialAnnotationsProvider,
         extraActualDeclarationExtractorsInitializer,
         commonMemberStorage,
-        irModuleFragmentPostCompute
+        irModuleFragmentPostCompute,
+        irVerificationSettings,
     )
     return pipeline.convertToIrAndActualize()
 }
@@ -115,7 +121,6 @@ private class Fir2IrPipeline(
     val outputs: List<ModuleCompilerAnalyzedOutput>,
     val fir2IrExtensions: Fir2IrExtensions,
     val fir2IrConfiguration: Fir2IrConfiguration,
-    val compilerConfiguration: CompilerConfiguration,
     val irGeneratorExtensions: Collection<IrGenerationExtension>,
     val irMangler: KotlinMangler.IrMangler,
     val visibilityConverter: Fir2IrVisibilityConverter,
@@ -125,6 +130,7 @@ private class Fir2IrPipeline(
     val extraActualDeclarationExtractorsInitializer: (Fir2IrComponents) -> List<IrExtraActualDeclarationExtractor>,
     val commonMemberStorage: Fir2IrCommonMemberStorage,
     val irModuleFragmentPostCompute: (IrModuleFragment) -> Unit,
+    val irVerificationSettings: IrVerificationSettings,
 ) {
     private class Fir2IrConversionResult(
         val mainIrFragment: IrModuleFragmentImpl,
@@ -139,6 +145,12 @@ private class Fir2IrPipeline(
     ) {
         val componentsStorage: Fir2IrComponentsStorage = componentsStoragePerSourceSession.values.last()
     }
+
+    class IrVerificationSettings(
+        val mode: IrVerificationMode,
+        val enableIrVisibilityChecks: Boolean,
+        val enableIrVarargTypesChecks: Boolean,
+    )
 
     fun convertToIrAndActualize(): Fir2IrActualizedResult {
         require(outputs.isNotEmpty()) { "No modules found" }
@@ -481,8 +493,7 @@ private class Fir2IrPipeline(
         module: IrModuleFragment,
         hasScriptingPlugin: Boolean,
     ): Boolean {
-        val irVerificationMode = compilerConfiguration.get(CommonConfigurationKeys.VERIFY_IR, IrVerificationMode.NONE)
-        if (irVerificationMode == IrVerificationMode.NONE && !fir2IrConfiguration.validateIrForKlibSerialization) {
+        if (irVerificationSettings.mode == IrVerificationMode.NONE && !fir2IrConfiguration.validateIrForKlibSerialization) {
             return false
         }
         val regularSeverity = when {
@@ -490,8 +501,8 @@ private class Fir2IrPipeline(
             // It would be too confusing to blame plugins, even if some really contributed to an invalid IR as well,
             // if it is primarily our fault.
             hasIrValidationErrorFromFrontend -> null
-            irVerificationMode == IrVerificationMode.WARNING -> CompilerMessageSeverity.WARNING
-            irVerificationMode == IrVerificationMode.ERROR -> CompilerMessageSeverity.ERROR
+            irVerificationSettings.mode == IrVerificationMode.WARNING -> CompilerMessageSeverity.WARNING
+            irVerificationSettings.mode == IrVerificationMode.ERROR -> CompilerMessageSeverity.ERROR
             else -> null
         }
 
@@ -513,7 +524,7 @@ private class Fir2IrPipeline(
                     withCheckers(
                         IrCallValueArgumentCountChecker, // KT-80062
                         IrValueAccessScopeChecker, // KT-80071
-                    ).applyIf(compilerConfiguration.enableIrVisibilityChecks) { // KT-80071
+                    ).applyIf(irVerificationSettings.enableIrVisibilityChecks) { // KT-80071
                         // User code may use @Suppress("INVISIBLE_REFERENCE") or similar, and at this point we do allow that,
                         // so visibility checks are only performed if requested via a flag, and in tests.
                         withCheckers(IrVisibilityChecker)
@@ -524,7 +535,7 @@ private class Fir2IrPipeline(
                     //  while most of them, somehow, work. It is disabled for now, not to cause too much breakage.
                     withCheckers(IrCallTypeArgumentCountChecker)
                 }
-                .applyIf(compilerConfiguration.enableIrVarargTypesChecks) {
+                .applyIf(irVerificationSettings.enableIrVarargTypesChecks) {
                     withVarargChecks()
                 }
                 .applyIf(!fir2IrConfiguration.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitBackingFields)) {
