@@ -134,7 +134,12 @@ class WasmIrToText(
             indent--
 
         newLine()
-        stringBuilder.append(wasmInstr.operator.mnemonic)
+
+        val parenthesisNeeded = wasmInstr.operator == WasmOp.REF_CAST_NULL
+        if (wasmInstr.operator == WasmOp.REF_CAST_NULL) // TODO fix mnemonics instead
+            stringBuilder.append("ref.cast (ref null")
+        else
+            stringBuilder.append(wasmInstr.operator.mnemonic)
 
         if (
             op == WasmOp.BLOCK ||
@@ -157,6 +162,8 @@ class WasmIrToText(
         wasmInstr.immediates.forEach {
             appendImmediate(it)
         }
+        if (parenthesisNeeded)
+            stringBuilder.append(")")
     }
 
     private fun appendImmediate(x: WasmImmediate) {
