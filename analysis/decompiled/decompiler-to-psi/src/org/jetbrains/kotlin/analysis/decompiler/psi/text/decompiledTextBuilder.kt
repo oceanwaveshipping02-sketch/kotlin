@@ -28,7 +28,7 @@ private const val FLEXIBLE_TYPE_COMMENT = "/* platform type */"
 private const val DECOMPILED_CONTRACT_STUB = "contract { /* compiled contract */ }"
 
 @OptIn(IntellijInternalApi::class, KtImplementationDetail::class)
-internal fun buildDecompiledText(fileStub: KotlinFileStub): String = PrettyPrinter(indentSize = 4).apply {
+internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = PrettyPrinter(indentSize = 4).apply {
     (fileStub.kind as? KotlinFileStubKind.Invalid)?.errorMessage?.let {
         return it
     }
