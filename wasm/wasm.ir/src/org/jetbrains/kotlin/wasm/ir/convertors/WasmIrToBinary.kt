@@ -392,7 +392,7 @@ class WasmIrToBinary(
         }
     }
 
-    private fun appendFiledType(field: WasmStructFieldDeclaration) {
+    private fun appendFieldType(field: WasmStructFieldDeclaration) {
         appendType(field.type)
         b.writeVarUInt1(field.isMutable)
     }
@@ -431,7 +431,7 @@ class WasmIrToBinary(
         b.writeVarInt7(WasmBinary.STRUCT_TYPE)
         b.writeVarUInt32(type.fields.size)
         type.fields.forEach {
-            appendFiledType(it)
+            appendFieldType(it)
         }
     }
 
@@ -441,7 +441,7 @@ class WasmIrToBinary(
         }
 
         b.writeVarInt7(WasmBinary.ARRAY_TYPE)
-        appendFiledType(type.field)
+        appendFieldType(type.field)
     }
 
     val WasmFunctionType.index: Int
