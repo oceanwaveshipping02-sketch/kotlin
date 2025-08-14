@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // TARGET_BACKEND: WASM
+// WASM_ALLOW_FQNAME_IN_KCLASS
 
 import kotlin.js.Promise
 import kotlin.reflect.KProperty1
