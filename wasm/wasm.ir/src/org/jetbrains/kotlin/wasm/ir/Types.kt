@@ -68,7 +68,6 @@ sealed class WasmBlockType {
     class Value(val type: WasmType) : WasmBlockType()
 }
 
-
 fun WasmType.getHeapType(): WasmHeapType =
     when (this) {
         is WasmRefType -> heapType
@@ -82,14 +81,22 @@ fun WasmType.getHeapType(): WasmHeapType =
         else -> error("Unknown heap type for type $this")
     }
 
-fun WasmType.isInternalRefType() = when (this) {
+fun WasmHeapType.Simple.isShareable() = when (this) {
+    WasmHeapType.Simple.Extern -> true
+    WasmHeapType.Simple.NoExtern -> true
+    WasmHeapType.Simple.Any -> true
+    WasmHeapType.Simple.Eq -> true
+    WasmHeapType.Simple.Struct -> true
+    WasmHeapType.Simple.None -> true
+    else -> false
+}
+
+fun WasmType.isShareableRefType() = when (this) {
     is WasmAnyRef -> true
     is WasmEqRef -> true
-    is WasmFuncRef -> true
     is WasmExternRef -> true
-    // TODO decide later
-    is WasmRefNullrefType -> false
-    is WasmRefNullExternrefType -> false
+    is WasmI31Ref -> true
+    is WasmStructRef -> true
     else -> false
 }
 

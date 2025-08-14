@@ -336,15 +336,13 @@ class WasmIrToText(
     private fun appendFunctionTypeDeclaration(type: WasmFunctionType) {
         newLineList("type") {
             appendModuleFieldReference(type)
-            maybeShared(emitSharedObjects) {
-                sameLineList("func") {
-                    sameLineList("param") {
-                        type.parameterTypes.forEach { appendType(it) }
-                    }
-                    if (type.resultTypes.isNotEmpty()) {
-                        sameLineList("result") {
-                            type.resultTypes.forEach { appendType(it) }
-                        }
+            sameLineList("func") {
+                sameLineList("param") {
+                    type.parameterTypes.forEach { appendType(it) }
+                }
+                if (type.resultTypes.isNotEmpty()) {
+                    sameLineList("result") {
+                        type.resultTypes.forEach { appendType(it) }
                     }
                 }
             }
@@ -558,7 +556,7 @@ class WasmIrToText(
     fun appendHeapType(type: WasmHeapType) {
         when (type) {
             is WasmHeapType.Simple ->
-                maybeShared(emitSharedObjects) { appendElement(type.name) }
+                maybeShared(emitSharedObjects && type.isShareable()) { appendElement(type.name) }
 
             is WasmHeapType.Type -> {
 //                appendElement("opt")
@@ -592,7 +590,7 @@ class WasmIrToText(
             }
 
             else ->
-                if (type.isInternalRefType())
+                if (type.isShareableRefType())
                     maybeShared(emitSharedObjects) { appendElement(type.name) }
                 else
                     appendElement(type.name)
