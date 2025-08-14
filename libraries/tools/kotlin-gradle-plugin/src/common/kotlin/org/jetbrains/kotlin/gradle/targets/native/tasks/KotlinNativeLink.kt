@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.asValidFrameworkName
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.useXcodeMessageStyle
-import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinNativeBinaryMetrics
 import org.jetbrains.kotlin.gradle.plugin.statistics.UsesBuildFusService
 import org.jetbrains.kotlin.gradle.report.UsesBuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.native.UsesKonanPropertiesBuildService
@@ -444,10 +443,6 @@ constructor(
 
         addBuildMetricsForTaskAction(metricsReporter = metricsReporter, languageVersion = null) {
             validatedExportedLibraries()
-
-            buildFusService.orNull?.reportFusMetrics {
-                KotlinNativeBinaryMetrics.collectMetrics(binary, it)
-            }
 
             val output = outputFile.get()
             output.parentFile.mkdirs()

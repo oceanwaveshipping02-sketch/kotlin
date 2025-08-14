@@ -157,6 +157,10 @@ internal object NativeArgumentMetrics : FusMetrics {
         parseCommandLineArguments(compilerArguments, arguments)
         getGcTypeMetrics(arguments)?.let { metricsConsumer.report(it, true) }
         getSwiftExportMetrics(arguments)?.let { metricsConsumer.report(it, true) }
+
+        // Binary options metrics
+        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_OPTIMIZED, arguments.optimization)
+        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_DEBUGGABLE, arguments.debug)
     }
 }
 
@@ -368,16 +372,6 @@ internal object KotlinStdlibConfigurationMetrics : FusMetrics {
         project.addConfigurationMetrics {
             it.put(StringMetrics.KOTLIN_STDLIB_VERSION, requestedStdlibVersion)
         }
-    }
-}
-
-internal object KotlinNativeBinaryMetrics : FusMetrics {
-    internal fun collectMetrics(
-        binary: NativeBinary,
-        metricsConsumer: StatisticsValuesConsumer,
-    ) {
-        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_DEBUGGABLE, binary.debuggable)
-        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_OPTIMIZED, binary.optimized)
     }
 }
 
