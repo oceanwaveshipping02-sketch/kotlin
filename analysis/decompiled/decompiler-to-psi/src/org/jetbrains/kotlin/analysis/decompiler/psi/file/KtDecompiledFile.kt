@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.analysis.decompiler.psi.file
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.stubs.StubTreeLoader
+import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.text.DecompiledText
 import org.jetbrains.kotlin.analysis.decompiler.psi.text.buildDecompiledText
@@ -28,10 +29,13 @@ open class KtDecompiledFile(
         get() = greenStubTree?.root?.let { it as KotlinFileStub }
 
     private val decompiledText = LockedClearableLazyValue(Any()) {
-        if (stubBasedDecompilerEnabled) {
+        val vFile = provider.virtualFile
+        // A copy of the original file already has decompiled text as a content
+        if (vFile is LightVirtualFile) {
+            vFile.content.toString()
+        } else if (stubBasedDecompilerEnabled) {
             val stubTree = ClsClassFinder.allowMultifileClassPart {
                 val stubLoader = StubTreeLoader.getInstance()
-                val vFile = provider.virtualFile
                 val project = project
 
                 // The default project is not supported in the stub loader
@@ -54,9 +58,9 @@ open class KtDecompiledFile(
                 }
 
                 """
-                // Could not decompile the file: $cause
-                // Please report an issue: https://kotl.in/issue
-            """.trimIndent()
+                    // Could not decompile the file: $cause
+                    // Please report an issue: https://kotl.in/issue
+                """.trimIndent()
             }
         } else {
             buildDecompiledText(provider.virtualFile).text
