@@ -9677,6 +9677,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("collectionsAndJavaTypes.kt")
+      public void testCollectionsAndJavaTypes() {
+        runTest("compiler/testData/diagnostics/tests/crv/collectionsAndJavaTypes.kt");
+      }
+
+      @Test
       @TestMetadata("controlFlow.kt")
       public void testControlFlow() {
         runTest("compiler/testData/diagnostics/tests/crv/controlFlow.kt");
