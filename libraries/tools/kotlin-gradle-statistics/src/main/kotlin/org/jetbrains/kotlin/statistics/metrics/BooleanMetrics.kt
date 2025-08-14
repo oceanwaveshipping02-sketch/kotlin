@@ -127,6 +127,6 @@ enum class BooleanMetrics(val type: BooleanOverridePolicy, val anonymization: Bo
     ;
 
     companion object {
-        const val VERSION = 18
+        const val VERSION = 19
     }
 }
