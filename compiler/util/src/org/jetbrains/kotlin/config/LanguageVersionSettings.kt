@@ -444,6 +444,8 @@ enum class LanguageFeature(
     DiscriminateSuspendInOverloadResolution(KOTLIN_2_3, "KT-23610"),
     JsAllowLongInExportedDeclarations(sinceVersion = KOTLIN_2_3, "KT-79222"),
 
+    JsStaticInInterface(KOTLIN_2_3, issue = NO_ISSUE_SPECIFIED),
+
     IrRichCallableReferencesInKlibs(sinceVersion = KOTLIN_2_3, "KT-72734"), // KT-72734, KT-74384, KT-74392
 
     // 2.4

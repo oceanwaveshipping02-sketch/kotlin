@@ -47,6 +47,7 @@ declare namespace JS_TESTS {
         function processInterface(test: foo.TestInterface): string;
         interface WithTheCompanion {
             readonly interfaceField: string;
+            static companionStaticFunction(): string;
             readonly __doNotUseOrImplementIt: {
                 readonly "foo.WithTheCompanion": unique symbol;
             };
