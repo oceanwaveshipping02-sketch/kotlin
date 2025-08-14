@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPro
 import org.jetbrains.kotlin.gradle.plugin.launchInStage
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBinary
 import org.jetbrains.kotlin.gradle.report.TaskExecutionResult
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrOutputGranularity
 import org.jetbrains.kotlin.gradle.utils.addConfigurationMetrics
@@ -367,6 +368,16 @@ internal object KotlinStdlibConfigurationMetrics : FusMetrics {
         project.addConfigurationMetrics {
             it.put(StringMetrics.KOTLIN_STDLIB_VERSION, requestedStdlibVersion)
         }
+    }
+}
+
+internal object KotlinNativeBinaryMetrics : FusMetrics {
+    internal fun collectMetrics(
+        binary: NativeBinary,
+        metricsConsumer: StatisticsValuesConsumer,
+    ) {
+        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_DEBUGGABLE, binary.debuggable)
+        metricsConsumer.report(BooleanMetrics.ENABLED_NATIVE_BINARY_OPTIMIZED, binary.optimized)
     }
 }
 

@@ -73,6 +73,8 @@ enum class BooleanMetrics(val type: BooleanOverridePolicy, val anonymization: Bo
 
     // Native features
     ENABLED_SWIFT_EXPORT(OR, SAFE),
+    ENABLED_NATIVE_BINARY_DEBUGGABLE(OR, SAFE),
+    ENABLED_NATIVE_BINARY_OPTIMIZED(OR, SAFE),
 
     //Build reports
     FILE_BUILD_REPORT(OR, SAFE),
