@@ -11,6 +11,7 @@ import org.gradle.kotlin.dsl.kotlin
 import org.gradle.kotlin.dsl.version
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.testbase.BuildOptions.IsolatedProjectsMode
@@ -198,6 +199,64 @@ class FusStatisticsIT : KGPBaseTest() {
                 build("linkDebugExecutableHost", "-Pkotlin.session.logger.root.path=$projectPath") {
                     assertOutputDoesNotContainFusErrors()
                     fusStatisticsDirectory.assertFusReportContains("KOTLIN_INCREMENTAL_NATIVE_ENABLED=true")
+                }
+            }
+        }
+    }
+
+    @NativeGradlePluginTests
+    @DisplayName("Verify that the metric for native binary debuggable & optimized")
+    @GradleTest
+    fun testMetricCollectingForNativeBinary(gradleVersion: GradleVersion) {
+        nativeProject("empty", gradleVersion) {
+            plugins {
+                kotlin("multiplatform")
+            }
+            buildScriptInjection {
+                project.applyMultiplatform {
+                    linuxX64().binaries.staticLib(listOf(NativeBuildType.DEBUG)) {
+                        optimized = true
+                        debuggable = false
+                    }
+                    mingwX64().binaries.staticLib(listOf(NativeBuildType.DEBUG)) {
+                        optimized = false
+                        debuggable = true
+                    }
+                    macosArm64().binaries.staticLib(listOf(NativeBuildType.DEBUG)) {
+                        optimized = true
+                        debuggable = true
+                    }
+                    macosX64().binaries.staticLib(listOf(NativeBuildType.DEBUG)) {
+                        optimized = false
+                        debuggable = false
+                    }
+                    sourceSets.commonMain.get().compileStubSourceWithSourceSetName()
+                }
+            }
+
+            assertNoErrorFilesCreated {
+                build("linkDebugStaticLinuxX64", "-Pkotlin.session.logger.root.path=$projectPath") {
+                    assertOutputDoesNotContainFusErrors()
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_DEBUGGABLE=false")
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_OPTIMIZED=true")
+                }
+
+                build("linkDebugStaticMingwX64", "-Pkotlin.session.logger.root.path=$projectPath") {
+                    assertOutputDoesNotContainFusErrors()
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_DEBUGGABLE=true")
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_OPTIMIZED=false")
+                }
+
+                build("linkDebugStaticMacosArm64", "-Pkotlin.session.logger.root.path=$projectPath") {
+                    assertOutputDoesNotContainFusErrors()
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_DEBUGGABLE=true")
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_OPTIMIZED=true")
+                }
+
+                build("linkDebugStaticMacosX64", "-Pkotlin.session.logger.root.path=$projectPath") {
+                    assertOutputDoesNotContainFusErrors()
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_DEBUGGABLE=false")
+                    fusStatisticsDirectory.assertFusReportContains("ENABLED_NATIVE_BINARY_OPTIMIZED=false")
                 }
             }
         }
