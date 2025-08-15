@@ -20,6 +20,14 @@ import org.jetbrains.kotlin.name.Name
 @OptIn(InternalSymbolFinderAPI::class)
 abstract class BaseSymbolsImpl(val irBuiltIns: IrBuiltIns) {
     protected val symbolFinder = irBuiltIns.symbolFinder
+
+    protected fun findSharedVariableBoxClass(primitiveType: PrimitiveType?): FrontendKlibSymbols.SharedVariableBoxClassInfo {
+        val suffix = primitiveType?.typeName?.asString() ?: ""
+        val classId = ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SharedVariableBox$suffix"))
+        val boxClass = symbolFinder.findClass(classId)
+            ?: error("Could not find class $classId")
+        return FrontendKlibSymbols.SharedVariableBoxClassInfo(boxClass)
+    }
 }
 
 interface FrontendSymbols {
@@ -38,23 +46,12 @@ interface FrontendKlibSymbols : FrontendSymbols {
     }
 
     val genericSharedVariableBox: SharedVariableBoxClassInfo
-    val primitiveSharedVariableBoxes: Map<IrType, SharedVariableBoxClassInfo>
 }
 
 @OptIn(InternalSymbolFinderAPI::class)
 abstract class FrontendKlibSymbolsImpl(irBuiltIns: IrBuiltIns) : FrontendKlibSymbols, FrontendSymbolsImpl(irBuiltIns) {
-    private fun findSharedVariableBoxClass(suffix: String): FrontendKlibSymbols.SharedVariableBoxClassInfo {
-        val classId = ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SharedVariableBox$suffix"))
-        val boxClass = symbolFinder.findClass(classId)
-            ?: error("Could not find class $classId")
-        return FrontendKlibSymbols.SharedVariableBoxClassInfo(boxClass)
-    }
-
     // The SharedVariableBox family of classes exists only in non-JVM stdlib variants, hence the nullability of the properties below.
-    override val genericSharedVariableBox: FrontendKlibSymbols.SharedVariableBoxClassInfo = findSharedVariableBoxClass("")
-    override val primitiveSharedVariableBoxes: Map<IrType, FrontendKlibSymbols.SharedVariableBoxClassInfo> = PrimitiveType.entries.associate {
-        irBuiltIns.primitiveTypeToIrType[it]!! to findSharedVariableBoxClass(it.typeName.asString())
-    }
+    override val genericSharedVariableBox: FrontendKlibSymbols.SharedVariableBoxClassInfo = findSharedVariableBoxClass(null)
 }
 
 interface FrontendWebSymbols : FrontendKlibSymbols {

@@ -297,4 +297,8 @@ abstract class KlibSymbols(irBuiltIns: IrBuiltIns) : FrontendKlibSymbols, Symbol
     final override val getProgressionLastElementByReturnType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> by CallableId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("getProgressionLastElement")).functionSymbolAssociatedBy {
         it.returnType.classifierOrFail
     }
+
+    val primitiveSharedVariableBoxes: Map<IrType, FrontendKlibSymbols.SharedVariableBoxClassInfo> = PrimitiveType.entries.associate {
+        irBuiltIns.primitiveTypeToIrType[it]!! to findSharedVariableBoxClass(it)
+    }
 }
