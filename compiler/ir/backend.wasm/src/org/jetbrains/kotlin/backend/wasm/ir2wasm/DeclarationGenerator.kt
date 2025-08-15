@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.ir.util.erasedUpperBound
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.parentOrNull
+import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 import org.jetbrains.kotlin.wasm.ir.*
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
@@ -214,6 +215,16 @@ class DeclarationGenerator(
         isFinal: Boolean,
         generateSpecialITableField: Boolean,
     ): WasmStructDeclaration {
+        // currently WasmGC do not support shared fun refs, so in case of "shared" objects vtable shall store indices into Wasm shared table
+        // instead of func refs
+        val useIndirectRef = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_SHARED_OBJECTS)
+        fun vtableFieldType(method: VirtualMethodMetadata): WasmType =
+            if (useIndirectRef) {
+                WasmI32
+            } else {
+                WasmRefNullType(WasmHeapType.Type(wasmFileCodegenContext.referenceFunctionType(method.function.symbol)))
+            }
+
         val vtableFields = mutableListOf<WasmStructFieldDeclaration>()
         if (generateSpecialITableField) {
             val specialITableField = WasmStructFieldDeclaration(
@@ -227,7 +238,7 @@ class DeclarationGenerator(
         methods.mapTo(vtableFields) {
             WasmStructFieldDeclaration(
                 name = it.signature.name.asString(),
-                type = WasmRefNullType(WasmHeapType.Type(wasmFileCodegenContext.referenceFunctionType(it.function.symbol))),
+                type = vtableFieldType(it),
                 isMutable = false
             )
         }
@@ -321,11 +332,13 @@ class DeclarationGenerator(
             buildSpecialITableInit(metadata, this, location)
             metadata.virtualMethods.forEachIndexed { i, method ->
                 if (method.function.modality != Modality.ABSTRACT) {
+                    // TODO write funcref to global table instead (cache func->idx!), put WasmOp.I32_CONST instead
                     buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(wasmFileCodegenContext.referenceFunction(method.function.symbol)))
                 } else {
                     check(allowIncompleteImplementations) {
                         "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
                     }
+                    // TODO use some special i32 value (-1?) to mark missing methods
                     //This erased by DCE so abstract version appeared in non-abstract class
                     buildRefNull(WasmHeapType.Simple.NoFunc, location)
                 }
