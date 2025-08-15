@@ -147,8 +147,6 @@ interface FrontendSymbols {
     val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol
     val coroutineGetContext: IrSimpleFunctionSymbol
 
-    fun isSideEffectFree(call: IrCall): Boolean = false
-
     companion object {
         fun isLateinitIsInitializedPropertyGetter(symbol: IrFunctionSymbol): Boolean =
             symbol is IrSimpleFunctionSymbol && symbol.owner.let { function ->

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
@@ -210,6 +211,14 @@ abstract class Symbols(irBuiltIns: IrBuiltIns) : FrontendSymbolsImpl(irBuiltIns)
     open val setWithoutBoundCheckName: Name? = null
 
     open val arraysContentEquals: Map<IrType, IrSimpleFunctionSymbol>? = null
+
+    /**
+     * Determines whether the provided function call is free of side effects.
+     * If it is, then we consider this function to be pure and that unblocks some backend optimizations.
+     */
+    open fun isSideEffectFree(call: IrCall): Boolean {
+        return false
+    }
 }
 
 // TODO KT-77388 rename to `BackendKlibSymbolsImpl`
