@@ -8,11 +8,13 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserializatio
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.stubs.Stub
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.AstLoadingFilter
 import org.jetbrains.kotlin.KtRealPsiSourceElement
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsClassFinder
 import org.jetbrains.kotlin.descriptors.*
@@ -110,35 +112,39 @@ private fun <S, T> loadStubByElement(ktElement: T): Stub? where T : StubBasedPsi
         stubList
     }
 
-    val nodeList = (ktFile.node as FileElement).stubbedSpine.spineNodes
-    if (stubList.size != nodeList.size) {
-        val exception = buildErrorWithAttachment("Compiled stubs are inconsistent with decompiled stubs") {
-            withPsiEntry("ktFile", ktFile)
+    val stub = AstLoadingFilter.forceAllowTreeLoading(ktFile, ThrowableComputable {
+        val nodeList = (ktFile.node as FileElement).stubbedSpine.spineNodes
+        if (stubList.size == nodeList.size) {
+            stubList[nodeList.indexOf(ktElement.node)]
+        } else {
+            val exception = buildErrorWithAttachment("Compiled stubs are inconsistent with decompiled stubs") {
+                withPsiEntry("ktFile", ktFile)
 
-            withEntry("stubListSize", stubList.size.toString())
-            withEntry("stubList") {
-                stubList.forEachIndexed { index, stub ->
-                    this.print("$index ")
-                    this.println(stub.stubType?.toString() ?: stub::class.simpleName)
+                withEntry("stubListSize", stubList.size.toString())
+                withEntry("stubList") {
+                    stubList.forEachIndexed { index, stub ->
+                        this.print("$index ")
+                        this.println(stub.stubType?.toString() ?: stub::class.simpleName)
+                    }
+                }
+
+                withEntry("nodeListSize", nodeList.size.toString())
+                withEntry("nodeList") {
+                    nodeList.forEachIndexed { index, node ->
+                        this.print("$index ")
+                        this.println(node.elementType.toString())
+                    }
                 }
             }
 
-            withEntry("nodeListSize", nodeList.size.toString())
-            withEntry("nodeList") {
-                nodeList.forEachIndexed { index, node ->
-                    this.print("$index ")
-                    this.println(node.elementType.toString())
-                }
-            }
+            Logger.getInstance("#org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization.StubBasedFirDeserializer")
+                .error(exception)
+
+            null
         }
+    })
 
-        Logger.getInstance("#org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization.StubBasedFirDeserializer")
-            .error(exception)
-
-        return null
-    }
-
-    return stubList[nodeList.indexOf(ktElement.node)]
+    return stub
 }
 
 internal fun deserializeClassToSymbol(
