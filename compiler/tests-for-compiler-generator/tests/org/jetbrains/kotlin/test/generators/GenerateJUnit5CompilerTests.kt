@@ -304,6 +304,10 @@ fun generateJUnit5CompilerTests(args: Array<String>, mainClassName: String?) {
                 model("codegen/boxModernJdk")
             }
 
+            testClass<AbstractReflectionLegacyImplementationTest> {
+                model("codegen/box/reflection")
+            }
+
             testClass<AbstractFirPsiBlackBoxInlineCodegenTest> {
                 model("codegen/boxInline")
             }
