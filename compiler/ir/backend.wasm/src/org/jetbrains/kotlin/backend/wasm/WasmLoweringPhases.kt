@@ -651,9 +651,9 @@ fun getWasmLowerings(
         propertyReferenceLowering,
         callableReferencePhase,
 
-        inventNamesForLocalFunctionsPhase,
         singleAbstractMethodPhase,
         localDelegatedPropertiesLoweringPhase,
+        inventNamesForLocalFunctionsPhase,
         localDeclarationsLoweringPhase,
         localDeclarationExtractionPhase,
         staticCallableReferenceLoweringPhase,
