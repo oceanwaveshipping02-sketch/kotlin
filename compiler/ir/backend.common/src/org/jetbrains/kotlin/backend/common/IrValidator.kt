@@ -116,7 +116,7 @@ private class IrFileValidator(
 /**
  * Verifies IR invariants, invokes [reportError] callback for each validation errors.
  *
- * Tries not to throw, even if the IR tree is severely broken, but that is not guaranteed.
+ * Tries to finish gracefully, even if the IR tree is severely broken, but that is not guaranteed.
  */
 fun validateIr(
     element: IrElement,
