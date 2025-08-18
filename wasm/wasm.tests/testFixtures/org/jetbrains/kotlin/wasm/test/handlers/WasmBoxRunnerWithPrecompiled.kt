@@ -71,6 +71,8 @@ class WasmBoxRunnerWithPrecompiled(
                     let actualResult;
                     try {
                         // Use "dynamic import" to catch exception happened during JS & Wasm modules initialization
+                        console.log('${stdlibPath.toJsPath()}');
+                        console.log('${File(outputDirBase, "test.mjs").toJsPath()}');
                         os.chdir('${stdlibPath.toJsPath()}');
                         let stdlib = await import('${stdlibInitFile.toJsPath()}');
                         let stdlibInstantiate = await stdlib.instantiate();
