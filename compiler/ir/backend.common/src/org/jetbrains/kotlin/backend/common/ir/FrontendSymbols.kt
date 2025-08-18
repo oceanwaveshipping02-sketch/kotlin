@@ -134,6 +134,9 @@ interface FrontendSymbols {
         override val arrays: List<IrClassSymbol>
             get() = irBuiltIns.primitiveTypesToPrimitiveArrays.values + irBuiltIns.unsignedTypesToUnsignedArrays.values + irBuiltIns.arrayClass
 
+        override val defaultConstructorMarker: IrClassSymbol
+            get() = error("Should not be called on the first stage")
+
         companion object {
             private object CallableIds {
                 private val String.baseId get() = CallableId(BASE_KOTLIN_PACKAGE, Name.identifier(this))
@@ -162,7 +165,6 @@ interface FrontendKlibSymbols : FrontendSymbols {
         const val THROW_UNSUPPORTED_OPERATION_NAME = "throwUnsupportedOperationException"
         const val GET_COROUTINE_CONTEXT_NAME = "getCoroutineContext"
         const val COROUTINE_CONTEXT_NAME = "coroutineContext"
-        const val DEFAULT_CONSTRUCTOR_MARKET_NAME = "DefaultConstructorMarker"
     }
 }
 
@@ -180,8 +182,6 @@ interface FrontendJsSymbols : FrontendWebSymbols {
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendJsSymbols, FrontendWebSymbols.Impl(irBuiltIns) {
         override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
         override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
-
-        override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContextGetter.getterSymbol()
         override val suspendCoroutineUninterceptedOrReturn = CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
@@ -208,7 +208,6 @@ interface FrontendJsSymbols : FrontendWebSymbols {
 
             private object ClassIds {
                 private val String.baseJsClassId get() = ClassId(StandardClassIds.BASE_JS_PACKAGE, Name.identifier(this))
-                val defaultConstructorMarker = FrontendKlibSymbols.DEFAULT_CONSTRUCTOR_MARKET_NAME.baseJsClassId
                 val JsOutlinedFunction = "JsOutlinedFunction".baseJsClassId
             }
         }
@@ -223,8 +222,6 @@ interface FrontendWasmSymbols : FrontendWebSymbols {
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendWasmSymbols, FrontendWebSymbols.Impl(irBuiltIns) {
         override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
         override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
-
-        override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContextGetter.getterSymbol()
         override val suspendCoroutineUninterceptedOrReturn = CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
@@ -242,11 +239,6 @@ interface FrontendWasmSymbols : FrontendWebSymbols {
                 val coroutineGetContext = FrontendKlibSymbols.GET_COROUTINE_CONTEXT_NAME.internalCallableId
                 val coroutineContextGetter = CallableId(COROUTINES_PACKAGE_FQ_NAME, Name.identifier(FrontendKlibSymbols.COROUTINE_CONTEXT_NAME))
             }
-
-            private object ClassIds {
-                private val String.internalClassId get() = ClassId(FrontendWasmSymbols.wasmInternalFqName, Name.identifier(this))
-                val defaultConstructorMarker = FrontendKlibSymbols.DEFAULT_CONSTRUCTOR_MARKET_NAME.internalClassId
-            }
         }
     }
 }
@@ -257,7 +249,6 @@ interface FrontendNativeSymbols : FrontendKlibSymbols {
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendNativeSymbols, FrontendKlibSymbols.Impl(irBuiltIns) {
         override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
         override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
-        override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
         override val isAssertionArgumentEvaluationEnabled = CallableIds.isAssertionArgumentEvaluationEnabled.functionSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContext.getterSymbol()
@@ -285,12 +276,6 @@ interface FrontendNativeSymbols : FrontendKlibSymbols {
                 // Built-ins functions
                 private val String.builtInsCallableId get() = CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier(this))
                 val isAssertionArgumentEvaluationEnabled = "isAssertionArgumentEvaluationEnabled".builtInsCallableId
-            }
-
-            private object ClassIds {
-                // Internal classes
-                private val String.internalClassId get() = ClassId(RuntimeNames.kotlinNativeInternalPackageName, Name.identifier(this))
-                val defaultConstructorMarker = FrontendKlibSymbols.DEFAULT_CONSTRUCTOR_MARKET_NAME.internalClassId
             }
         }
     }

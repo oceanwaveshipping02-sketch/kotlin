@@ -6,13 +6,10 @@
 package org.jetbrains.kotlin.backend.wasm
 
 import org.jetbrains.kotlin.backend.common.ir.FrontendWasmSymbols
-import org.jetbrains.kotlin.backend.common.ir.FrontendWebSymbols
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -32,7 +29,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
-import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.wasm.config.wasmTarget
 
 @OptIn(ObsoleteDescriptorBasedAPI::class, InternalSymbolFinderAPI::class)
@@ -91,6 +87,7 @@ class WasmSymbols(
         getInternalWasmFunction("throwNoBranchMatchedException")
     override val throwKotlinNothingValueException: IrSimpleFunctionSymbol
         get() = TODO()
+    override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
     override val stringBuilder =
         getIrClass(FqName("kotlin.text.StringBuilder"))
     override val coroutineImpl =
@@ -411,4 +408,10 @@ class WasmSymbols(
     private fun getIrType(fqName: String): IrType = getIrClass(FqName(fqName)).defaultType
     private fun getInternalWasmClass(name: String): IrClassSymbol = getIrClass(FrontendWasmSymbols.wasmInternalFqName.child(Name.identifier(name)))
 
+    companion object {
+        private object ClassIds {
+            private val String.internalClassId get() = ClassId(FrontendWasmSymbols.wasmInternalFqName, Name.identifier(this))
+            val defaultConstructorMarker = DEFAULT_CONSTRUCTOR_MARKET_NAME.internalClassId
+        }
+    }
 }

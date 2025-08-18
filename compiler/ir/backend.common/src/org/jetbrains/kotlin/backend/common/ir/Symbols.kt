@@ -223,6 +223,10 @@ abstract class Symbols(irBuiltIns: IrBuiltIns) : FrontendSymbols.Impl(irBuiltIns
     open fun isSideEffectFree(call: IrCall): Boolean {
         return false
     }
+
+    companion object {
+        const val DEFAULT_CONSTRUCTOR_MARKET_NAME = "DefaultConstructorMarker"
+    }
 }
 
 // TODO KT-77388 rename to `BackendKlibSymbolsImpl`

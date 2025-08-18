@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.backend.konan.ir
 import org.jetbrains.kotlin.backend.common.ErrorReportingContext
 import org.jetbrains.kotlin.backend.common.ir.FrontendNativeSymbols
 import org.jetbrains.kotlin.backend.common.ir.KlibSymbols
+import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.lower.TestProcessorFunctionKind
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -16,10 +17,8 @@ import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -114,6 +113,7 @@ private object ClassIds {
     val kType = "KType".reflectionClassId
 
     // Special standard library classes
+    val defaultConstructorMarker = Symbols.DEFAULT_CONSTRUCTOR_MARKET_NAME.internalClassId
     val stringBuilder = ClassId(StandardNames.TEXT_PACKAGE_FQ_NAME, Name.identifier("StringBuilder"))
     val enumEntries = ClassId(FqName("kotlin.enums"), Name.identifier("EnumEntries"))
     val continuation = ClassId(StandardNames.COROUTINES_PACKAGE_FQ_NAME, Name.identifier("Continuation"))
@@ -525,6 +525,7 @@ class KonanSymbols(
     val throwIllegalArgumentException = CallableIds.throwIllegalArgumentException.functionSymbol()
     val throwIllegalArgumentExceptionWithMessage = CallableIds.throwIllegalArgumentExceptionWithMessage.functionSymbol()
 
+    override val defaultConstructorMarker: IrClassSymbol = ClassIds.defaultConstructorMarker.classSymbol()
     override val stringBuilder = ClassIds.stringBuilder.classSymbol()
 
     private fun arrayToExtensionSymbolMap(callableId: CallableId, condition: (IrFunction) -> Boolean = { true }): Lazy<Map<IrClassSymbol, IrSimpleFunctionSymbol>> {

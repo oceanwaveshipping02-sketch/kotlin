@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.hasShape
 import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_JS_PACKAGE
 
 // TODO KT-77388 rename to `BackendWebSymbolsImpl`
@@ -57,6 +59,7 @@ class JsSymbols(
     override val throwIAE: IrSimpleFunctionSymbol =
         symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_IAE")
 
+    override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
     override val stringBuilder
         get() = TODO("not implemented")
     override val coroutineImpl =
@@ -109,4 +112,11 @@ class JsSymbols(
                 call.symbol == intrinsics.arrayConcat ||
                 call.symbol == intrinsics.jsBoxIntrinsic ||
                 call.symbol == intrinsics.jsUnboxIntrinsic
+
+    companion object {
+        private object ClassIds {
+            private val String.baseJsClassId get() = ClassId(BASE_JS_PACKAGE, Name.identifier(this))
+            val defaultConstructorMarker = DEFAULT_CONSTRUCTOR_MARKET_NAME.baseJsClassId
+        }
+    }
 }
