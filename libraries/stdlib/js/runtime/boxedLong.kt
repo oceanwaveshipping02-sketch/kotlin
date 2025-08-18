@@ -504,6 +504,8 @@ private val MIN_VALUE = Long(0, 1 shl 31)
 @BoxedLongApi
 private val TWO_PWR_24_ = fromInt(1 shl 24)
 
+@BoxedLongApi
 internal val longArrayClass = PrimitiveKClassImpl(js("Array").unsafeCast<JsClass<LongArray>>(), "LongArray", { it is LongArray })
 
+@BoxedLongApi
 internal fun isLongArray(a: dynamic): Boolean = isJsArray(a) && a.`$type$` === "LongArray"
