@@ -237,6 +237,6 @@ abstract class KlibSymbols(irBuiltIns: IrBuiltIns) : FrontendKlibSymbols, Symbol
     }
 
     val primitiveSharedVariableBoxes: Map<IrType, FrontendKlibSymbols.SharedVariableBoxClassInfo> = PrimitiveType.entries.associate {
-        irBuiltIns.primitiveTypeToIrType[it]!! to findSharedVariableBoxClass(it)
+        irBuiltIns.primitiveTypeToIrType[it]!! to findSharedVariableBoxClass(it).value
     }
 }

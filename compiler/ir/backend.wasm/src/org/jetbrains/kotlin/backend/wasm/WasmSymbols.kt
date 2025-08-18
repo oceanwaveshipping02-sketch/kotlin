@@ -87,7 +87,7 @@ class WasmSymbols(
         getInternalWasmFunction("throwNoBranchMatchedException")
     override val throwKotlinNothingValueException: IrSimpleFunctionSymbol
         get() = TODO()
-    override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
+    override val defaultConstructorMarker by ClassIds.defaultConstructorMarker.classSymbol()
     override val stringBuilder =
         getIrClass(FqName("kotlin.text.StringBuilder"))
     override val coroutineImpl =
@@ -382,7 +382,7 @@ class WasmSymbols(
 
     private fun getFunction(name: String, ownerPackage: FqName): IrSimpleFunctionSymbol {
         val callableId = CallableId(ownerPackage, Name.identifier(name))
-        return callableId.functionSymbol()
+        return callableId.functionSymbol().value
     }
 
     private fun maybeGetFunction(name: String, ownerPackage: FqName): IrSimpleFunctionSymbol? {
@@ -392,17 +392,17 @@ class WasmSymbols(
 
     private fun getInternalWasmFunction(name: String): IrSimpleFunctionSymbol {
         val callableId = CallableId(FrontendWasmSymbols.wasmInternalFqName, Name.identifier(name))
-        return callableId.functionSymbol()
+        return callableId.functionSymbol().value
     }
 
     private fun getEnumsFunction(name: String): IrSimpleFunctionSymbol {
         val callableId = CallableId(enumsInternalPackageFqName, Name.identifier(name))
-        return callableId.functionSymbol()
+        return callableId.functionSymbol().value
     }
 
     private fun getIrClass(fqName: FqName): IrClassSymbol {
         val classId = ClassId(fqName.parent(), fqName.shortName())
-        return classId.classSymbol()
+        return classId.classSymbol().value
     }
 
     private fun getIrType(fqName: String): IrType = getIrClass(FqName(fqName)).defaultType

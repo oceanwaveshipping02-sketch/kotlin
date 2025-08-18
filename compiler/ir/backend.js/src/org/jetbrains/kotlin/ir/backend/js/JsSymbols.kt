@@ -59,7 +59,7 @@ class JsSymbols(
     override val throwIAE: IrSimpleFunctionSymbol =
         symbolFinder.topLevelFunction(kotlinPackageFqn, "THROW_IAE")
 
-    override val defaultConstructorMarker = ClassIds.defaultConstructorMarker.classSymbol()
+    override val defaultConstructorMarker by ClassIds.defaultConstructorMarker.classSymbol()
     override val stringBuilder
         get() = TODO("not implemented")
     override val coroutineImpl =

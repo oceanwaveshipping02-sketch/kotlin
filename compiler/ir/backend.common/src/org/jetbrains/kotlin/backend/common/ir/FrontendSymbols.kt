@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrDynamicType
 import org.jetbrains.kotlin.ir.types.classOrNull
@@ -32,32 +33,41 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
     protected val symbolFinder = irBuiltIns.symbolFinder
 
     // TODO KT-79436 unify backend specific functions and remove the old ones
-    protected fun findSharedVariableBoxClass(primitiveType: PrimitiveType?): FrontendKlibSymbols.SharedVariableBoxClassInfo {
+    protected fun findSharedVariableBoxClass(primitiveType: PrimitiveType?): Lazy<FrontendKlibSymbols.SharedVariableBoxClassInfo> {
         val suffix = primitiveType?.typeName?.asString() ?: ""
         val classId = ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SharedVariableBox$suffix"))
-        val boxClass = classId.classSymbol()
-        return FrontendKlibSymbols.SharedVariableBoxClassInfo(boxClass)
+        val boxClass by classId.classSymbol()
+        return lazy { FrontendKlibSymbols.SharedVariableBoxClassInfo(boxClass) }
     }
 
-    // Native
-    protected fun ClassId.classSymbol() = symbolFinder.findClass(this) ?: error("Class $this is not found")
-    protected fun CallableId.propertySymbols() = symbolFinder.findProperties(this).toList()
-    protected fun CallableId.functionSymbols() = symbolFinder.findFunctions(this).toList()
+    protected fun ClassId.classSymbol(): Lazy<IrClassSymbol> {
+        val clazz = symbolFinder.findClass(this) ?: error("Class $this is not found")
+        return lazy { clazz }
+    }
+
+    protected fun CallableId.propertySymbols(): List<IrPropertySymbol> {
+        return symbolFinder.findProperties(this).toList()
+    }
+
+    protected fun CallableId.functionSymbols(): List<IrSimpleFunctionSymbol> {
+        return symbolFinder.findFunctions(this).toList()
+    }
+
     protected fun ClassId.primaryConstructorSymbol(): Lazy<IrConstructorSymbol> {
-        val clazz = classSymbol()
+        val clazz by classSymbol()
         return lazy { (clazz.owner.primaryConstructor ?: error("Class ${this} has no primary constructor")).symbol }
     }
 
     protected fun ClassId.noParametersConstructorSymbol(): Lazy<IrConstructorSymbol> {
-        val clazz = classSymbol()
+        val clazz by classSymbol()
         return lazy { (clazz.owner.constructors.singleOrNull { it.parameters.isEmpty() } ?: error("Class ${this} has no constructor without parameters")).symbol }
     }
 
-    protected fun CallableId.functionSymbol(): IrSimpleFunctionSymbol {
+    protected fun CallableId.functionSymbol(): Lazy<IrSimpleFunctionSymbol> {
         val elements = functionSymbols()
         require(elements.isNotEmpty()) { "No function $this found" }
         require(elements.size == 1) { "Several functions $this found:\n${elements.joinToString("\n")}" }
-        return elements.single()
+        return lazy { elements.single() }
     }
 
     protected inline fun CallableId.functionSymbol(crossinline condition: (IrSimpleFunction) -> Boolean): Lazy<IrSimpleFunctionSymbol> {
@@ -157,7 +167,7 @@ interface FrontendKlibSymbols : FrontendSymbols {
 
     abstract class Impl(irBuiltIns: IrBuiltIns) : FrontendKlibSymbols, FrontendSymbols.Impl(irBuiltIns) {
         // The SharedVariableBox family of classes exists only in non-JVM stdlib variants, hence the nullability of the properties below.
-        override val genericSharedVariableBox: FrontendKlibSymbols.SharedVariableBoxClassInfo = findSharedVariableBoxClass(null)
+        override val genericSharedVariableBox: FrontendKlibSymbols.SharedVariableBoxClassInfo by findSharedVariableBoxClass(null)
     }
 
     companion object {
@@ -180,15 +190,15 @@ interface FrontendJsSymbols : FrontendWebSymbols {
     val jsOutlinedFunctionAnnotationSymbol: IrClassSymbol
 
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendJsSymbols, FrontendWebSymbols.Impl(irBuiltIns) {
-        override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
-        override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
+        override val throwUninitializedPropertyAccessException by CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
+        override val throwUnsupportedOperationException by CallableIds.throwUnsupportedOperationException.functionSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContextGetter.getterSymbol()
-        override val suspendCoroutineUninterceptedOrReturn = CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
-        override val coroutineGetContext = CallableIds.coroutineGetContext.functionSymbol()
+        override val suspendCoroutineUninterceptedOrReturn by CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
+        override val coroutineGetContext by CallableIds.coroutineGetContext.functionSymbol()
 
-        override val jsCode: IrSimpleFunctionSymbol = CallableIds.jsCall.functionSymbol()
-        override val jsOutlinedFunctionAnnotationSymbol: IrClassSymbol = ClassIds.JsOutlinedFunction.classSymbol()
+        override val jsCode: IrSimpleFunctionSymbol by CallableIds.jsCall.functionSymbol()
+        override val jsOutlinedFunctionAnnotationSymbol: IrClassSymbol by ClassIds.JsOutlinedFunction.classSymbol()
 
         companion object {
             private const val COROUTINE_SUSPEND_OR_RETURN_JS_NAME = "suspendCoroutineUninterceptedOrReturnJS"
@@ -220,12 +230,12 @@ interface FrontendWasmSymbols : FrontendWebSymbols {
     }
 
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendWasmSymbols, FrontendWebSymbols.Impl(irBuiltIns) {
-        override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
-        override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
+        override val throwUninitializedPropertyAccessException by CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
+        override val throwUnsupportedOperationException by CallableIds.throwUnsupportedOperationException.functionSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContextGetter.getterSymbol()
-        override val suspendCoroutineUninterceptedOrReturn = CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
-        override val coroutineGetContext = CallableIds.coroutineGetContext.functionSymbol()
+        override val suspendCoroutineUninterceptedOrReturn by CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
+        override val coroutineGetContext by CallableIds.coroutineGetContext.functionSymbol()
 
         companion object {
             private const val COROUTINE_SUSPEND_OR_RETURN_NAME = "suspendCoroutineUninterceptedOrReturn"
@@ -247,13 +257,13 @@ interface FrontendNativeSymbols : FrontendKlibSymbols {
     val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol
 
     open class Impl(irBuiltIns: IrBuiltIns) : FrontendNativeSymbols, FrontendKlibSymbols.Impl(irBuiltIns) {
-        override val throwUninitializedPropertyAccessException = CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
-        override val throwUnsupportedOperationException = CallableIds.throwUnsupportedOperationException.functionSymbol()
-        override val isAssertionArgumentEvaluationEnabled = CallableIds.isAssertionArgumentEvaluationEnabled.functionSymbol()
+        override val throwUninitializedPropertyAccessException by CallableIds.throwUninitializedPropertyAccessException.functionSymbol()
+        override val throwUnsupportedOperationException by CallableIds.throwUnsupportedOperationException.functionSymbol()
+        override val isAssertionArgumentEvaluationEnabled by CallableIds.isAssertionArgumentEvaluationEnabled.functionSymbol()
 
         override val coroutineContextGetter by CallableIds.coroutineContext.getterSymbol()
-        override val suspendCoroutineUninterceptedOrReturn = CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
-        override val coroutineGetContext = CallableIds.getCoroutineContext.functionSymbol()
+        override val suspendCoroutineUninterceptedOrReturn by CallableIds.suspendCoroutineUninterceptedOrReturn.functionSymbol()
+        override val coroutineGetContext by CallableIds.getCoroutineContext.functionSymbol()
 
         companion object {
             private const val COROUTINE_SUSPEND_OR_RETURN_NAME = "suspendCoroutineUninterceptedOrReturn"
