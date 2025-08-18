@@ -18,4 +18,4 @@ fun Foo.test(bar: Bar) {
 }
 
 // 1 final synthetic LFoo; \$this_test
-// 1 final synthetic LBar; \$this_test\$1
+// 1 final synthetic LBar; \$this_test\$test
