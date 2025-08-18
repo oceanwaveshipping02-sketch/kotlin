@@ -10,8 +10,10 @@ import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.COROUTINES_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.InternalSymbolFinderAPI
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithVisibility
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -32,6 +34,24 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
     protected val symbolFinder = irBuiltIns.symbolFinder
 
+    private fun validateVisibility(declaration: IrDeclarationWithVisibility) {
+        if (declaration.visibility == DescriptorVisibilities.INTERNAL) {
+            require(declaration.isPublishedApi()) {
+                "Internal API class must be published via '@PublishedApi' annotation: ${declaration.render()}"
+            }
+        } else {
+            require(declaration.visibility.isPublicAPI) {
+                "Public API class cannot be used as a symbol: ${declaration.render()}"
+            }
+        }
+
+        declaration.annotations.forEach { validateVisibility(it.symbol.owner) }
+    }
+
+    open fun IrClassSymbol.validate() = validateVisibility(owner)
+    open fun IrPropertySymbol.validate() = validateVisibility(owner)
+    open fun IrFunctionSymbol.validate() = validateVisibility(owner)
+
     // TODO KT-79436 unify backend specific functions and remove the old ones
     protected fun findSharedVariableBoxClass(primitiveType: PrimitiveType?): Lazy<FrontendKlibSymbols.SharedVariableBoxClassInfo> {
         val suffix = primitiveType?.typeName?.asString() ?: ""
@@ -42,7 +62,7 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
 
     protected fun ClassId.classSymbol(): Lazy<IrClassSymbol> {
         val clazz = symbolFinder.findClass(this) ?: error("Class $this is not found")
-        return lazy { clazz }
+        return lazy { clazz.apply { validate() } }
     }
 
     protected fun CallableId.propertySymbols(): List<IrPropertySymbol> {
@@ -55,19 +75,19 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
 
     protected fun ClassId.primaryConstructorSymbol(): Lazy<IrConstructorSymbol> {
         val clazz by classSymbol()
-        return lazy { (clazz.owner.primaryConstructor ?: error("Class ${this} has no primary constructor")).symbol }
+        return lazy { (clazz.owner.primaryConstructor?.apply { symbol.validate() } ?: error("Class ${this} has no primary constructor")).symbol }
     }
 
     protected fun ClassId.noParametersConstructorSymbol(): Lazy<IrConstructorSymbol> {
         val clazz by classSymbol()
-        return lazy { (clazz.owner.constructors.singleOrNull { it.parameters.isEmpty() } ?: error("Class ${this} has no constructor without parameters")).symbol }
+        return lazy { (clazz.owner.constructors.singleOrNull { it.parameters.isEmpty() }?.apply { symbol.validate() } ?: error("Class ${this} has no constructor without parameters")).symbol }
     }
 
     protected fun CallableId.functionSymbol(): Lazy<IrSimpleFunctionSymbol> {
         val elements = functionSymbols()
         require(elements.isNotEmpty()) { "No function $this found" }
         require(elements.size == 1) { "Several functions $this found:\n${elements.joinToString("\n")}" }
-        return lazy { elements.single() }
+        return lazy { elements.single().apply { validate() } }
     }
 
     protected inline fun CallableId.functionSymbol(crossinline condition: (IrSimpleFunction) -> Boolean): Lazy<IrSimpleFunctionSymbol> {
@@ -76,13 +96,14 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
             val elements = unfilteredElements.filter { condition(it.owner) }
             require(elements.isNotEmpty()) { "No function $this found corresponding given condition" }
             require(elements.size == 1) { "Several functions $this found corresponding given condition:\n${elements.joinToString("\n")}" }
-            elements.single()
+            elements.single().apply { validate() }
         }
     }
 
     protected inline fun <K> CallableId.functionSymbolAssociatedBy(crossinline getKey: (IrSimpleFunction) -> K): Lazy<Map<K, IrSimpleFunctionSymbol>> {
         val unfilteredElements = functionSymbols()
         return lazy {
+            unfilteredElements.forEach { it.validate() }
             unfilteredElements.associateBy { getKey(it.owner) }
         }
     }
@@ -92,7 +113,7 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
         require(elements.isNotEmpty()) { "No properties $this found" }
         require(elements.size == 1) { "Several properties $this found:\n${elements.joinToString("\n")}" }
         return lazy {
-            elements.single().owner.getter!!.symbol
+            elements.single().owner.getter!!.symbol.apply { validate() }
         }
     }
 
@@ -103,7 +124,7 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
             val elements = unfilteredElements.filter { it.owner.getter?.extensionReceiverClass == extensionReceiverClass }
             require(elements.isNotEmpty()) { "No properties $this found with ${extensionReceiverClass} receiver" }
             require(elements.size == 1) { "Several properties $this found with ${extensionReceiverClass} receiver:\n${elements.joinToString("\n")}" }
-            elements.single().owner.getter!!.symbol
+            elements.single().owner.getter!!.symbol.apply { validate() }
         }
     }
 
