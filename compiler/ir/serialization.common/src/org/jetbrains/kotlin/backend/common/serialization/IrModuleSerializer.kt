@@ -7,11 +7,17 @@ package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.builtins.FunctionInterfacePackageFragment
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.packageFragmentDescriptor
+import org.jetbrains.kotlin.ir.util.erasedTopLevelCopy
+import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.library.SerializedIrFile
 import org.jetbrains.kotlin.library.SerializedIrModule
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
     protected val settings: IrSerializationSettings,
@@ -34,6 +40,24 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
         return fileSerializer.serializeIrFile(file)
     }
 
+    private fun serializePreparedInlinableFunctions(module: IrModuleFragment): SerializedIrFile {
+        val preparedFunctions = buildList {
+            module.acceptChildrenVoid(object : IrVisitorVoid() {
+                override fun visitElement(element: IrElement) {
+                    element.acceptChildrenVoid(this)
+                }
+
+                override fun visitSimpleFunction(declaration: IrSimpleFunction) {
+                    addIfNotNull(declaration.erasedTopLevelCopy)
+                    super.visitSimpleFunction(declaration)
+                }
+            })
+        }
+
+        val fileSerializer = createFileSerializer()
+        return fileSerializer.serializeIrFileWithPreparedInlineFunctions(preparedFunctions)
+    }
+
     fun serializedIrModule(module: IrModuleFragment): SerializedIrModule {
         val serializedFiles = module.files
             .filter { it.packageFragmentDescriptor !is FunctionInterfacePackageFragment }
@@ -42,6 +66,10 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
         if (settings.shouldCheckSignaturesOnUniqueness) {
             globalDeclarationTable.clashDetector.reportErrorsTo(diagnosticReporter)
         }
-        return SerializedIrModule(serializedFiles)
+
+        val inlinableFunctionsFile = if (settings.serializePreparedInlinableFunctions)
+            serializePreparedInlinableFunctions(module)
+        else null
+        return SerializedIrModule(serializedFiles, inlinableFunctionsFile)
     }
 }

@@ -42,9 +42,7 @@ class InlineFunctionSerializationPreProcessing(private val context: LoweringCont
     }
 
     private fun IrSimpleFunction.convertToPrivateTopLevel(): IrSimpleFunction {
-        // TODO KT-77597: there is a problem with header KLib.
-        //  This function must be serialized into header klib, but private functions are not serialized.
-        visibility = DescriptorVisibilities.PRIVATE
+        visibility = DescriptorVisibilities.PUBLIC
         correspondingPropertySymbol = null
         parent = file
 
