@@ -288,8 +288,10 @@ open class AbstractFirJsSteppingTest(
     }
 }
 
-open class AbstractFirJsSteppingWithInlinedFunInKlibTest : AbstractFirJsSteppingTest(
-    testGroupOutputDirPrefix = "debug/firSteppingWithInlinedFunInKlib/"
+open class AbstractFirJsSteppingWithInlinedFunInKlibTest(
+    testGroupOutputDirPrefix: String = "debug/firSteppingWithInlinedFunInKlib/"
+) : AbstractFirJsSteppingTest(
+    testGroupOutputDirPrefix = testGroupOutputDirPrefix
 ) {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
@@ -297,6 +299,24 @@ open class AbstractFirJsSteppingWithInlinedFunInKlibTest : AbstractFirJsStepping
             defaultDirectives {
                 LANGUAGE with "+${LanguageFeature.IrInlinerBeforeKlibSerialization.name}"
             }
+        }
+    }
+}
+
+open class AbstractFirJsSteppingSplitTest : AbstractFirJsSteppingWithInlinedFunInKlibTest(
+    testGroupOutputDirPrefix = "debug/firSteppingSplit/"
+) {
+    override val additionalIgnoreDirectives: List<ValueDirective<TargetBackend>>?
+        get() = listOf(IGNORE_BACKEND_K2_MULTI_MODULE)
+
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        with(builder) {
+            @OptIn(TestInfrastructureInternals::class)
+            useModuleStructureTransformers(
+                ::SplittingModuleTransformerForBoxTests
+            )
+            useMetaTestConfigurators(::SplittingTestConfigurator)
         }
     }
 }
