@@ -266,7 +266,6 @@ abstract class KotlinCompile @Inject constructor(
             }
 
             overrideXJvmDefaultInPresenceOfKotlinDslPlugin(args)
-            validateKotlinVersionsInPresenceOfKotlinDslPlugin(compilerOptions)
 
             explicitApiMode.orNull?.run { args.explicitApi = toCompilerValue() }
 
@@ -432,6 +431,7 @@ abstract class KotlinCompile @Inject constructor(
         taskOutputsBackup: TaskOutputsBackup?,
     ) {
         validateKotlinAndJavaHasSameTargetCompatibility(args)
+        validateKotlinVersionsInPresenceOfKotlinDslPlugin(compilerOptions)
 
         val gradlePrintingMessageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
         val gradleMessageCollector =
