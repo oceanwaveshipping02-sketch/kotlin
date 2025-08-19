@@ -140,6 +140,14 @@ class CasesPublicAPITest {
         snapshotAPIAndCompare(testName.methodName, excludedClasses = setOf("cases.file.FileFacade1Kt"))
     }
 
+    @Test
+    fun internalAsPublic() {
+        snapshotAPIAndCompare(testName.methodName, internalToPublic = { packageName, className ->
+            className == "InternalClassAsPublic"
+                    || (packageName == "cases.internalAsPublic" && className == "InternalClassFillName")
+        })
+    }
+
     private fun snapshotAPIAndCompareRoot(
         testClassRelativePath: String,
         includedClasses: Set<String> = emptySet(),
@@ -161,28 +169,35 @@ class CasesPublicAPITest {
         excludedClasses: Set<String> = emptySet(),
         includedAnnotatedWith: Set<String> = emptySet(),
         excludedAnnotatedWith: Set<String> = emptySet(),
+        internalToPublic: KotlinClassNamePredicate = KotlinClassNamePredicate.NONE,
     ) {
         val filters = AbiFilters(includedClasses, excludedClasses, includedAnnotatedWith, excludedAnnotatedWith)
 
         val testClassPaths = baseClassPaths.map { it.resolve(testClassRelativePath) }
         val target = baseOutputPath.resolve(testClassRelativePath).resolve(testName.methodName + ".txt")
 
-        doCheck(testClassPaths, target, filters)
+        doCheck(testClassPaths, target, filters, internalToPublic)
     }
 }
 
-internal fun doCheck(testClassPaths: List<File>, target: File, filters: AbiFilters) {
+internal fun doCheck(
+    testClassPaths: List<File>,
+    target: File,
+    filters: AbiFilters,
+    internalToPublic: KotlinClassNamePredicate = KotlinClassNamePredicate.NONE,
+    jarFiles: List<File> = emptyList(),
+) {
     val testClasses = testClassPaths.flatMap { it.walk() }.filter { it.name.endsWith(".class") }
     check(testClasses.isNotEmpty()) { "No class files are found in paths: $testClassPaths" }
 
     if (!target.exists()) {
         target.bufferedWriter().use { writer ->
-            ToolsV2.printJvmDump(writer, testClasses, filters)
+            ToolsV2.printJvmDump(writer, testClasses, jarFiles, filters, internalToPublic)
         }
         fail("Expected data file did not exist. Generating: $target")
     } else {
         val stringBuffer = StringBuffer()
-        ToolsV2.printJvmDump(stringBuffer, testClasses, filters)
+        ToolsV2.printJvmDump(stringBuffer, testClasses, jarFiles, filters, internalToPublic)
         assertEqualsToFile(target, stringBuffer.toString())
     }
 }

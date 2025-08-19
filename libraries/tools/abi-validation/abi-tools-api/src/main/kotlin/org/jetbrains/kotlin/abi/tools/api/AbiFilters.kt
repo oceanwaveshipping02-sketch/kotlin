@@ -17,7 +17,7 @@ package org.jetbrains.kotlin.abi.tools.api
  *
  * A declaration passes the inclusion filters if there is no inclusion rules, or it matches any inclusion rule, or at least one of its members (actual for class declaration) matches any inclusion rule.
  *
- * @since 2.1.20
+ * @since 2.2.0
  */
 public class AbiFilters(
     /**
@@ -97,4 +97,15 @@ public class AbiFilters(
 
     public val isEmpty: Boolean =
         includedClasses.isEmpty() && excludedClasses.isEmpty() && includedAnnotatedWith.isEmpty() && excludedAnnotatedWith.isEmpty()
+}
+
+/**
+ * Predicate for class names.
+ */
+public fun interface KotlinClassNamePredicate {
+    public fun test(packageName: String, className: String): Boolean
+
+    public object NONE : KotlinClassNamePredicate {
+        override fun test(packageName: String, className: String): Boolean = false
+    }
 }

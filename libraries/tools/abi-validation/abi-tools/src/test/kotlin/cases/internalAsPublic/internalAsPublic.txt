@@ -1,0 +1,18 @@
+public final class cases/internalAsPublic/InternalClassAsPublic {
+	public fun <init> ()V
+	public final fun function$abi_tools_test ()V
+	public final fun getI$abi_tools_test ()I
+}
+
+public final class cases/internalAsPublic/InternalClassFillName {
+	public fun <init> ()V
+	public final fun function$abi_tools_test ()V
+	public final fun getI$abi_tools_test ()I
+}
+
+public final class cases/internalAsPublic/subpackage/InternalClassAsPublic {
+	public fun <init> ()V
+	public final fun function$abi_tools_test ()V
+	public final fun getI$abi_tools_test ()I
+}
+
