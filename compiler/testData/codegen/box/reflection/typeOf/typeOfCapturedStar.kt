@@ -1,3 +1,4 @@
+// LANGUAGE: +NameBasedDestructuring +DeprecateNameMismatchInShortDestructuringWithParentheses +EnableNameBasedDestructuringShortForm
 // WITH_REFLECT
 // KJS_WITH_FULL_RUNTIME
 // WASM_ALLOW_FQNAME_IN_KCLASS
@@ -33,7 +34,7 @@ fun box(): String {
         override val t: CharSequence
             get() = ""
     }
-    val (w, f) = bar(q) // T should be inferred to KFunction<Captured(*)> and should be approximated to KFunction<Any>, not KFunction<*>
+    val [w, f] = bar(q) // T should be inferred to KFunction<Captured(*)> and should be approximated to KFunction<Any>, not KFunction<*>
 
     val expected = "test.KFunction<kotlin.Any>"
     if (w.toString() != expected) return "Fail 1: $w"
