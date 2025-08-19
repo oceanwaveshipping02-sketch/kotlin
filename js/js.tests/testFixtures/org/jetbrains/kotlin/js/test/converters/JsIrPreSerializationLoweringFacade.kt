@@ -39,7 +39,8 @@ class JsIrPreSerializationLoweringFacade(
     testServices: TestServices,
 ) : IrPreSerializationLoweringFacade<IrBackendInput>(testServices, BackendKinds.IrBackend, BackendKinds.IrBackend) {
     override fun shouldTransform(module: TestModule): Boolean {
-        return module.languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization)
+        return module.languageVersionSettings.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) ||
+                module.languageVersionSettings.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
     }
 
     override fun transform(module: TestModule, inputArtifact: IrBackendInput): IrBackendInput {

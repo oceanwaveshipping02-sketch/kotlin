@@ -132,8 +132,9 @@ class SerializedIrDumpHandler(
              * should they appear within IrInlinedFunctionBlock.
              * In practice, it's tricky to track their declaration context, so let's simply not dump them at all in presence of IR Inliner.
              */
-            printFakeOverrideSymbolsInPropertiesOfAnonymousClasses = !testServices.moduleStructure.modules.first().languageVersionSettings
-                .supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization),
+            printFakeOverrideSymbolsInPropertiesOfAnonymousClasses = !testServices.moduleStructure.modules.first().languageVersionSettings.let {
+                it.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) || it.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
+            },
 
             /**
              * Names of type and value parameters are not a part of ABI (except for the single existing case in Kotlin/Native related to
@@ -208,7 +209,10 @@ class SerializedIrDumpHandler(
                 } else if ((declaration is IrSimpleFunction || declaration is IrProperty) &&
                     declaration.parent.let { it is IrClass && it.visibility == DescriptorVisibilities.LOCAL } &&
                     declaration.origin == IrDeclarationOrigin.FAKE_OVERRIDE &&
-                    testServices.moduleStructure.modules.first().languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization)
+                    testServices.moduleStructure.modules.first().languageVersionSettings.let {
+                        it.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) ||
+                                it.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
+                    }
                 ) {
                     /** KT-76186: Ignore fake overrides in local classes declared within IrInlinedFunctionBlock.
                      * There are no such declarations after IR Inliner, but they appear after deserialization.

@@ -723,7 +723,9 @@ fun jsLoweringsOfTheFirstPhase(
     if (languageVersionSettings.supportsFeature(LanguageFeature.IrRichCallableReferencesInKlibs)) {
         this += upgradeCallableReferences
     }
-    if (languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization)) {
+    if (languageVersionSettings.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) ||
+        languageVersionSettings.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
+    ) {
         this += jsCodeOutliningPhaseOnFirstStage
     }
     this += loweringsOfTheFirstPhase(JsManglerIr, languageVersionSettings)

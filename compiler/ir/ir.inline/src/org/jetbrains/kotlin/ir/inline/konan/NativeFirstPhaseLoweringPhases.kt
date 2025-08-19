@@ -32,7 +32,9 @@ fun nativeLoweringsOfTheFirstPhase(
     if (languageVersionSettings.supportsFeature(LanguageFeature.IrRichCallableReferencesInKlibs)) {
         this += upgradeCallableReferencesPhase
     }
-    if (languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization)) {
+    if (languageVersionSettings.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) ||
+        languageVersionSettings.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
+    ) {
         this += assertionWrapperPhase
     }
     this += loweringsOfTheFirstPhase(KonanManglerIr, languageVersionSettings)
