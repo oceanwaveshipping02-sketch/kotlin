@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.util.ThreadSafeCache
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.flatMapToSet
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.getAbsoluteFile
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.mapToSet
+import org.jetbrains.kotlin.konan.test.testLibraryAtomicFu
+import org.jetbrains.kotlin.konan.test.testLibraryKotlinxCoroutines
 import org.jetbrains.kotlin.swiftexport.standalone.*
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
 import org.jetbrains.kotlin.utils.KotlinNativePaths
@@ -48,9 +50,18 @@ abstract class AbstractSwiftExportTest {
         val testPathFull = getAbsoluteFile(testDir)
 
         val testCaseId = TestCaseId.TestDataFile((testPathFull.toPath() / "${testPathFull.name}.kt").toFile())
-        val originalTestCase = testRunProvider.testCaseGroupProvider
+        var originalTestCase = testRunProvider.testCaseGroupProvider
             .getTestCaseGroup(testCaseId.testCaseGroupId, testRunSettings)
             ?.getByName(testCaseId)!!
+        var givenModules: Set<TestModule.Given>? = null
+
+        if (originalTestCase.dependsOnCoroutines()) {
+            givenModules = setOf(
+                TestModule.Given(testLibraryKotlinxCoroutines.toFile()),
+                TestModule.Given(testLibraryAtomicFu.toFile()),
+            )
+            originalTestCase = originalTestCase.copyAndAddModules(givenModules)
+        }
 
         val modulesToExport = (originalTestCase.rootModules + originalTestCase.modules).mapToSet {
             createInputModule(
@@ -90,6 +101,7 @@ abstract class AbstractSwiftExportTest {
                 .flatMapToSet {
                     it.allRegularDependencies.filterIsInstance<TestModule.Exclusive>().toSet()
                 } - originalTestCase.rootModules,
+            dependencies = givenModules
         )
         return swiftExportOutputs to resultingTestCase
     }
@@ -299,4 +311,22 @@ private fun getUnsupportedDeclarationsReporterKind(configMap: Map<String, String
             UnsupportedDeclarationReporterKind.entries
                 .singleOrNull { it.name.equals(value, ignoreCase = true) }
         } ?: UnsupportedDeclarationReporterKind.Silent
+}
+
+private fun TestCase.copyAndAddModules(givenModules: Set<TestModule.Given>?): TestCase {
+    val originalTestCase = TestCase(
+        id = this.id,
+        kind = this.kind,
+        modules = this.modules,
+        freeCompilerArgs = this.freeCompilerArgs,
+        nominalPackageName = this.nominalPackageName,
+        checks = this.checks,
+        extras = this.extras,
+        fileCheckStage = this.fileCheckStage,
+        expectedFailure = this.expectedFailure
+    )
+
+    originalTestCase.initialize(givenModules, null)
+
+    return originalTestCase
 }

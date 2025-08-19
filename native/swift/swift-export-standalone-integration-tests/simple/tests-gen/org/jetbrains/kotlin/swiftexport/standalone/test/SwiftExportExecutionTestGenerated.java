@@ -44,6 +44,12 @@ public class SwiftExportExecutionTestGenerated extends AbstractSwiftExportExecut
   }
 
   @Test
+  @TestMetadata("coroutines")
+  public void testCoroutines() {
+    runTest("native/swift/swift-export-standalone-integration-tests/simple/testData/execution/coroutines/");
+  }
+
+  @Test
   @TestMetadata("exceptions")
   public void testExceptions() {
     runTest("native/swift/swift-export-standalone-integration-tests/simple/testData/execution/exceptions/");

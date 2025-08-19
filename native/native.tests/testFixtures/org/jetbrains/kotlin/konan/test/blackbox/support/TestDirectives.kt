@@ -78,6 +78,11 @@ object TestDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Module,
     )
 
+    val SWIFT_EXPORT_COROUTINES by directive(
+        "Module contains coroutines as dependencies (applicable only for Swift Export)",
+        applicability = DirectiveApplicability.Module,
+    )
+
     val SWIFT_EXPORT_CONFIG by valueDirective(
         description = """
             Specify config for Swift Export in the format %KEY_1%=%VALUE_1%, %KEY_2%=%VALUE_2%. Implicitly marks module for Swift Export
@@ -508,6 +513,11 @@ internal class Location(private val testDataFile: File, val lineNumber: Int? = n
 }
 
 fun TestModule.Exclusive.shouldBeExportedToSwift(): Boolean = markedExportedToSwift() || swiftExportConfigMap() != null
+
+fun TestCase.dependsOnCoroutines(): Boolean = modules.any { it.dependsOnCoroutines() }
+
+fun TestModule.Exclusive.dependsOnCoroutines(): Boolean = directives
+    .any { it.directive.name == TestDirectives.SWIFT_EXPORT_COROUTINES.name }
 
 fun TestModule.Exclusive.swiftExportConfigMap(): Map<String, String>? = @Suppress("UNCHECKED_CAST") (directives
     .firstOrNull { it.directive.name == TestDirectives.SWIFT_EXPORT_CONFIG.name }
