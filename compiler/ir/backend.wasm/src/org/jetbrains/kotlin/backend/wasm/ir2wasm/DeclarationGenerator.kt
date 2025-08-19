@@ -49,6 +49,8 @@ class DeclarationGenerator(
     private val unitGetInstanceFunction: IrSimpleFunction by lazy { backendContext.findUnitGetInstanceFunction() }
     private val unitPrimaryConstructor: IrConstructor? by lazy { backendContext.irBuiltIns.unitClass.owner.primaryConstructor }
 
+    private val useIndirectFuncRefs = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_SHARED_OBJECTS)
+
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
     }
@@ -217,9 +219,8 @@ class DeclarationGenerator(
     ): WasmStructDeclaration {
         // currently WasmGC do not support shared fun refs, so in case of "shared" objects vtable shall store indices into Wasm shared table
         // instead of func refs
-        val useIndirectRef = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_SHARED_OBJECTS)
         fun vtableFieldType(method: VirtualMethodMetadata): WasmType =
-            if (useIndirectRef) {
+            if (useIndirectFuncRefs) {
                 WasmI32
             } else {
                 WasmRefNullType(WasmHeapType.Type(wasmFileCodegenContext.referenceFunctionType(method.function.symbol)))
@@ -275,6 +276,7 @@ class DeclarationGenerator(
                 for (method in wasmModuleMetadataCache.getInterfaceMetadata(supportedSpecialInterface).methods) {
                     addInterfaceMethod(metadata, builder, method, location)
                 }
+                // TODO do th same as with vtable
                 builder.buildStructNew(wasmFileCodegenContext.referenceVTableGcType(supportedSpecialInterface), location)
             } else {
                 builder.buildRefNull(WasmHeapType.Simple.None, location)
@@ -320,34 +322,50 @@ class DeclarationGenerator(
             isFinal = klass.modality == Modality.FINAL,
             generateSpecialITableField = true,
         )
-        wasmFileCodegenContext.defineVTableGcType(metadata.klass.symbol, vtableStruct)
+        wasmFileCodegenContext.defineVTableGcType(symbol, vtableStruct)
 
         if (klass.isAbstractOrSealed) return
 
         val vTableTypeReference = wasmFileCodegenContext.referenceVTableGcType(symbol)
         val vTableRefGcType = WasmRefType(WasmHeapType.Type(vTableTypeReference))
 
-        val initVTableGlobal = buildWasmExpression {
-            val location = SourceLocation.NoLocation("Create instance of vtable struct")
-            buildSpecialITableInit(metadata, this, location)
-            metadata.virtualMethods.forEachIndexed { i, method ->
+        val global = if (useIndirectFuncRefs) {
+            val methodRefs: List<WasmSymbol<WasmFunction>?> = metadata.virtualMethods.map { method ->
                 if (method.function.modality != Modality.ABSTRACT) {
-                    // TODO write funcref to global table instead (cache func->idx!), put WasmOp.I32_CONST instead
-                    buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(wasmFileCodegenContext.referenceFunction(method.function.symbol)))
+                    wasmFileCodegenContext.referenceTableFunction(method.function.symbol)
                 } else {
                     check(allowIncompleteImplementations) {
                         "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
                     }
-                    // TODO use some special i32 value (-1?) to mark missing methods
-                    //This erased by DCE so abstract version appeared in non-abstract class
-                    buildRefNull(WasmHeapType.Simple.NoFunc, location)
+                    null
                 }
             }
-            buildStructNew(vTableTypeReference, location)
+            // initializer cannot be created at this stage, as indices of table functions are not known yet
+            // it will be created ("materialized") at the module link phase
+            DeferredVTableWasmGlobal("<classVTable>", vTableRefGcType, methodRefs)
+
+        } else { // TODO refactor to two methods?
+            val initVTableGlobal = buildWasmExpression {
+                val location = SourceLocation.NoLocation("Create instance of vtable struct")
+                buildSpecialITableInit(metadata, this, location) // FIXME also add to deferred?
+                for (method in metadata.virtualMethods) {
+                    if (method.function.modality != Modality.ABSTRACT) {
+                        buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(wasmFileCodegenContext.referenceFunction(method.function.symbol)))
+                    } else {
+                        check(allowIncompleteImplementations) {
+                            "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
+                        }
+                        //This erased by DCE so abstract version appeared in non-abstract class
+                        buildRefNull(WasmHeapType.Simple.NoFunc, location)
+                    }
+                }
+                buildStructNew(vTableTypeReference, location)
+            }
+            WasmGlobal("<classVTable>", vTableRefGcType, false, initVTableGlobal)
         }
         wasmFileCodegenContext.defineGlobalVTable(
             irClass = symbol,
-            wasmGlobal = WasmGlobal("<classVTable>", vTableRefGcType, false, initVTableGlobal)
+            wasmGlobal = global
         )
     }
 

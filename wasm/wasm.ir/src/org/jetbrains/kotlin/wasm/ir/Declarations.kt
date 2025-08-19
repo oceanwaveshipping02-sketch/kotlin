@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.wasm.ir
 
+import org.jetbrains.kotlin.wasm.ir.WasmDataMode.Active
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 
@@ -102,7 +103,11 @@ class WasmElement(
 ) : WasmNamedModuleField() {
     sealed class Mode {
         object Passive : Mode()
-        class Active(val table: WasmTable, val offset: List<WasmInstr>) : Mode()
+        class Active(val table: WasmTable, val offset: List<WasmInstr>) : Mode() {
+            constructor(table: WasmTable, offset: Int) : this(table, mutableListOf<WasmInstr>().also<MutableList<WasmInstr>> {
+                WasmExpressionBuilder(it).buildConstI32(offset, SourceLocation.NoLocation("Offset value for WasmElement.Mode.Active"))
+            })
+        }
         object Declarative : Mode()
     }
 }
@@ -123,13 +128,25 @@ class WasmLocal(
     val isParameter: Boolean
 )
 
-class WasmGlobal(
+// FIXME update seroialization/deserialization to match new hierarchy
+// TODO try make sealed. Maybe base class needs to be abstract for that (other packages cannot use selaed constructor)
+open class WasmGlobal(
     override val name: String,
     val type: WasmType,
     val isMutable: Boolean,
     val init: List<WasmInstr>,
     val importPair: WasmImportDescriptor? = null
 ) : WasmNamedModuleField()
+{
+    open val isDeferred = false
+}
+
+class DeferredVTableWasmGlobal(name: String, type: WasmRefType, val virtualMethodReferences: List<WasmSymbol<WasmFunction>?>) :
+    WasmGlobal(name, type, false, emptyList())
+{
+    override val isDeferred = true
+    // TODO maybe add abstract DeferredWasmGlobal<T> with materialize(T)
+}
 
 sealed class WasmExport<T : WasmNamedModuleField>(
     val name: String,

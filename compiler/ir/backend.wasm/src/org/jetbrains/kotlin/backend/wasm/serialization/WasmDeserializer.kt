@@ -94,6 +94,19 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
             WasmGlobal(name, type, isMutable, init, importPair)
         }
 
+    // TODO
+//    private fun deserializeDeferredGlobal() =
+//        deserializeNamedModuleField { name, flags ->
+//            val irClassRef = deserializeIdSignature()
+//            // TODO
+//            val type = deserializeType()
+//            val isMutable = flags.consume()
+//            val init = deserializeList(::deserializeInstr)
+//            val importPair = runIf(!flags.consume(), ::deserializeImportDescriptor)
+//            DeferredGlobalVTable()
+//            WasmGlobal(name, type, isMutable, init, importPair)
+//        }
+
     private fun deserializeFunctionType() =
         deserializeNamedModuleField { _, _ ->
             val parameterTypes = deserializeList(::deserializeType)
@@ -621,6 +634,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
     private fun deserializeFunctions() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunction)
     private fun deserializeGlobalFields() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
     private fun deserializeGlobalVTables() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
+    private fun deserializeDeferredGlobalVTables(): Nothing = TODO("deserializeReferencableElements(::deserializeIdSignature, ::deserializeDeferredGlobal)")
     private fun deserializeGlobalClassITables() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
     private fun deserializeFunctionTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunctionType)
     private fun deserializeGcTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeTypeDeclaration)

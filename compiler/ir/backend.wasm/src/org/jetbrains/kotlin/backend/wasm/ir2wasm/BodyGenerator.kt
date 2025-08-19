@@ -662,6 +662,11 @@ class BodyGenerator(
     private fun generateAnyParameters(klassSymbol: IrClassSymbol, location: SourceLocation) {
         //ClassITable and VTable load
         body.commentGroupStart { "Any parameters" }
+        // TODO how do I reference deferred entities?
+        //  PROBLEM1: Need WasmGlobal (symbol), not Deferred... A: extend WasmGlobal? (override instr list with nulls until deferred)
+        //  PROBLEM2: choose between deferred/normal versions.
+        //   V1: based on option. Maybe move flag to context
+        //   V2: use single GlobalVTable list, just with polymorphic behavior (may be bad for serialization!)
         body.buildGetGlobal(wasmFileCodegenContext.referenceGlobalVTable(klassSymbol), location)
         if (klassSymbol.owner.hasInterfaceSuperClass()) {
             body.buildGetGlobal(wasmFileCodegenContext.referenceGlobalClassITable(klassSymbol), location)

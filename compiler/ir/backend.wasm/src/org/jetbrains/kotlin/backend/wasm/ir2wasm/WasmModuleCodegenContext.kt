@@ -50,6 +50,10 @@ class WasmFileCodegenContext(
         wasmFileFragment.globalVTables.define(irClass.getReferenceKey(), wasmGlobal)
     }
 
+    fun addTableFunction(wasmFunction: WasmSymbol<WasmFunction>) {
+        wasmFileFragment.tableFunctions.add(wasmFunction)
+    }
+
     fun defineGlobalClassITable(irClass: IrClassSymbol, wasmGlobal: WasmGlobal) {
         wasmFileFragment.globalClassITables.define(irClass.getReferenceKey(), wasmGlobal)
     }
@@ -68,6 +72,12 @@ class WasmFileCodegenContext(
 
     fun referenceFunction(irFunction: IrFunctionSymbol): WasmSymbol<WasmFunction> =
         wasmFileFragment.functions.reference(irFunction.getReferenceKey())
+
+    fun referenceTableFunction(irFunction: IrFunctionSymbol): WasmSymbol<WasmFunction> {
+        val wasmFunction = referenceFunction(irFunction)
+        addTableFunction(wasmFunction)
+        return wasmFunction
+    }
 
     fun referenceGlobalField(irField: IrFieldSymbol): WasmSymbol<WasmGlobal> =
         wasmFileFragment.globalFields.reference(irField.getReferenceKey())
