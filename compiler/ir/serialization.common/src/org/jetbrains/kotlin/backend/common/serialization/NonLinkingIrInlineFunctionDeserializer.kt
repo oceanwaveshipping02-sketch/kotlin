@@ -142,7 +142,7 @@ class NonLinkingIrInlineFunctionDeserializer(
                 val functionProto = fileReader.declaration(idSigIndex)
                 val function = declarationDeserializer.deserializeDeclaration(functionProto) as IrFunction
 
-                val fileEntryProto = fileReader.fileEntry(functionProto.irFunction.containingFileEntryId)!!
+                val fileEntryProto = fileReader.fileEntry(functionProto.irFunction.preparedInlineFunctionFileEntryId)!!
                 val fileEntry = deserializeFileEntry(fileEntryProto)
                 val file = IrFileImpl(
                     symbol = IrFileSymbolImpl(originalFunctionPackage.symbol.descriptor),
