@@ -3678,6 +3678,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val description: String
     }
 
+    interface MissingBranchForNonAbstractSealedClass : KaFirDiagnostic<KtWhenExpression> {
+        override val diagnosticClass get() = MissingBranchForNonAbstractSealedClass::class
+        val missingWhenCases: List<WhenMissingCase>
+    }
+
     interface InvalidIfAsExpression : KaFirDiagnostic<KtIfExpression> {
         override val diagnosticClass get() = InvalidIfAsExpression::class
     }
