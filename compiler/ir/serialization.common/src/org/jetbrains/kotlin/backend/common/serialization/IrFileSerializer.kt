@@ -174,8 +174,6 @@ open class IrFileSerializer(
     protected val protoDebugInfoMap = hashMapOf<String, Int>()
     protected val protoDebugInfoArray = arrayListOf<String>()
 
-    private val preprocessedToOriginalInlineFunctions = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
-
     private var isInsideInline: Boolean = false
     private var fileContainsInline = false
 
