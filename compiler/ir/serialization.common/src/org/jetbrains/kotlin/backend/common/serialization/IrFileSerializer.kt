@@ -1223,7 +1223,7 @@ open class IrFileSerializer(
             proto.addOverridden(serializeIrSymbol(it))
         }
         declaration.originalOfErasedTopLevelCopy?.let { original ->
-            proto.containingFileEntryId = serializeFileEntryId(original.fileEntry)
+            proto.preparedInlineFunctionFileEntryId = serializeFileEntryId(original.fileEntry)
         }
 
         return proto.build()

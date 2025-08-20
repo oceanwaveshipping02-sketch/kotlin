@@ -42,19 +42,19 @@ public interface IrFunctionOrBuilder extends
   long getOverridden(int index);
 
   /**
-   * <code>optional int32 containing_file_entry_id = 3;</code>
+   * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
    *
    * <pre>
-   *optional UniqId corresponding_property = 7;
+   * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
    * </pre>
    */
-  boolean hasContainingFileEntryId();
+  boolean hasPreparedInlineFunctionFileEntryId();
   /**
-   * <code>optional int32 containing_file_entry_id = 3;</code>
+   * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
    *
    * <pre>
-   *optional UniqId corresponding_property = 7;
+   * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
    * </pre>
    */
-  int getContainingFileEntryId();
+  int getPreparedInlineFunctionFileEntryId();
 }

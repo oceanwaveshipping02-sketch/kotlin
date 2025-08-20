@@ -89,7 +89,7 @@ public final class IrFunction extends
           }
           case 24: {
             bitField0_ |= 0x00000002;
-            containingFileEntryId_ = input.readInt32();
+            preparedInlineFunctionFileEntryId_ = input.readInt32();
             break;
           }
         }
@@ -179,33 +179,33 @@ public final class IrFunction extends
   }
   private int overriddenMemoizedSerializedSize = -1;
 
-  public static final int CONTAINING_FILE_ENTRY_ID_FIELD_NUMBER = 3;
-  private int containingFileEntryId_;
+  public static final int PREPARED_INLINE_FUNCTION_FILE_ENTRY_ID_FIELD_NUMBER = 3;
+  private int preparedInlineFunctionFileEntryId_;
   /**
-   * <code>optional int32 containing_file_entry_id = 3;</code>
+   * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
    *
    * <pre>
-   *optional UniqId corresponding_property = 7;
+   * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
    * </pre>
    */
-  public boolean hasContainingFileEntryId() {
+  public boolean hasPreparedInlineFunctionFileEntryId() {
     return ((bitField0_ & 0x00000002) == 0x00000002);
   }
   /**
-   * <code>optional int32 containing_file_entry_id = 3;</code>
+   * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
    *
    * <pre>
-   *optional UniqId corresponding_property = 7;
+   * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
    * </pre>
    */
-  public int getContainingFileEntryId() {
-    return containingFileEntryId_;
+  public int getPreparedInlineFunctionFileEntryId() {
+    return preparedInlineFunctionFileEntryId_;
   }
 
   private void initFields() {
     base_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrFunctionBase.getDefaultInstance();
     overridden_ = java.util.Collections.emptyList();
-    containingFileEntryId_ = 0;
+    preparedInlineFunctionFileEntryId_ = 0;
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -239,7 +239,7 @@ public final class IrFunction extends
       output.writeInt64NoTag(overridden_.get(i));
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
-      output.writeInt32(3, containingFileEntryId_);
+      output.writeInt32(3, preparedInlineFunctionFileEntryId_);
     }
     output.writeRawBytes(unknownFields);
   }
@@ -270,7 +270,7 @@ public final class IrFunction extends
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
-        .computeInt32Size(3, containingFileEntryId_);
+        .computeInt32Size(3, preparedInlineFunctionFileEntryId_);
     }
     size += unknownFields.size();
     memoizedSerializedSize = size;
@@ -370,7 +370,7 @@ public final class IrFunction extends
       bitField0_ = (bitField0_ & ~0x00000001);
       overridden_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000002);
-      containingFileEntryId_ = 0;
+      preparedInlineFunctionFileEntryId_ = 0;
       bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
@@ -407,7 +407,7 @@ public final class IrFunction extends
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000002;
       }
-      result.containingFileEntryId_ = containingFileEntryId_;
+      result.preparedInlineFunctionFileEntryId_ = preparedInlineFunctionFileEntryId_;
       result.bitField0_ = to_bitField0_;
       return result;
     }
@@ -427,8 +427,8 @@ public final class IrFunction extends
         }
         
       }
-      if (other.hasContainingFileEntryId()) {
-        setContainingFileEntryId(other.getContainingFileEntryId());
+      if (other.hasPreparedInlineFunctionFileEntryId()) {
+        setPreparedInlineFunctionFileEntryId(other.getPreparedInlineFunctionFileEntryId());
       }
       setUnknownFields(
           getUnknownFields().concat(other.unknownFields));
@@ -620,50 +620,50 @@ public final class IrFunction extends
       return this;
     }
 
-    private int containingFileEntryId_ ;
+    private int preparedInlineFunctionFileEntryId_ ;
     /**
-     * <code>optional int32 containing_file_entry_id = 3;</code>
+     * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
      *
      * <pre>
-     *optional UniqId corresponding_property = 7;
+     * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
      * </pre>
      */
-    public boolean hasContainingFileEntryId() {
+    public boolean hasPreparedInlineFunctionFileEntryId() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional int32 containing_file_entry_id = 3;</code>
+     * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
      *
      * <pre>
-     *optional UniqId corresponding_property = 7;
+     * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
      * </pre>
      */
-    public int getContainingFileEntryId() {
-      return containingFileEntryId_;
+    public int getPreparedInlineFunctionFileEntryId() {
+      return preparedInlineFunctionFileEntryId_;
     }
     /**
-     * <code>optional int32 containing_file_entry_id = 3;</code>
+     * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
      *
      * <pre>
-     *optional UniqId corresponding_property = 7;
+     * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
      * </pre>
      */
-    public Builder setContainingFileEntryId(int value) {
+    public Builder setPreparedInlineFunctionFileEntryId(int value) {
       bitField0_ |= 0x00000004;
-      containingFileEntryId_ = value;
+      preparedInlineFunctionFileEntryId_ = value;
       
       return this;
     }
     /**
-     * <code>optional int32 containing_file_entry_id = 3;</code>
+     * <code>optional int32 prepared_inline_function_file_entry_id = 3;</code>
      *
      * <pre>
-     *optional UniqId corresponding_property = 7;
+     * In case this is a prepared inlineable function copy, stores the file entry where the inline function was originally declared.
      * </pre>
      */
-    public Builder clearContainingFileEntryId() {
+    public Builder clearPreparedInlineFunctionFileEntryId() {
       bitField0_ = (bitField0_ & ~0x00000004);
-      containingFileEntryId_ = 0;
+      preparedInlineFunctionFileEntryId_ = 0;
       
       return this;
     }
