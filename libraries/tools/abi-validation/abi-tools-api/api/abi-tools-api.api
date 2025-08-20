@@ -21,13 +21,24 @@ public abstract interface class org/jetbrains/kotlin/abi/tools/api/AbiToolsInter
 	public abstract fun getV2 ()Lorg/jetbrains/kotlin/abi/tools/api/v2/AbiToolsV2;
 }
 
+public abstract interface class org/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate {
+	public abstract fun test (Ljava/lang/String;Ljava/lang/String;)Z
+}
+
+public final class org/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate$NONE : org/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate {
+	public static final field INSTANCE Lorg/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate$NONE;
+	public fun test (Ljava/lang/String;Ljava/lang/String;)Z
+}
+
 public abstract interface class org/jetbrains/kotlin/abi/tools/api/v2/AbiToolsV2 {
 	public abstract fun createKlibDump ()Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibDump;
 	public abstract fun extractKlibAbi (Ljava/io/File;Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibTarget;Lorg/jetbrains/kotlin/abi/tools/api/AbiFilters;)Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibDump;
 	public static synthetic fun extractKlibAbi$default (Lorg/jetbrains/kotlin/abi/tools/api/v2/AbiToolsV2;Ljava/io/File;Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibTarget;Lorg/jetbrains/kotlin/abi/tools/api/AbiFilters;ILjava/lang/Object;)Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibDump;
 	public abstract fun loadKlibDump (Ljava/io/File;)Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibDump;
 	public abstract fun loadKlibDump (Ljava/lang/CharSequence;)Lorg/jetbrains/kotlin/abi/tools/api/v2/KlibDump;
+	public abstract fun printJvmDump (Ljava/lang/Appendable;Ljava/lang/Iterable;Ljava/lang/Iterable;Lorg/jetbrains/kotlin/abi/tools/api/AbiFilters;Lorg/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate;)V
 	public abstract fun printJvmDump (Ljava/lang/Appendable;Ljava/lang/Iterable;Lorg/jetbrains/kotlin/abi/tools/api/AbiFilters;)V
+	public static synthetic fun printJvmDump$default (Lorg/jetbrains/kotlin/abi/tools/api/v2/AbiToolsV2;Ljava/lang/Appendable;Ljava/lang/Iterable;Ljava/lang/Iterable;Lorg/jetbrains/kotlin/abi/tools/api/AbiFilters;Lorg/jetbrains/kotlin/abi/tools/api/KotlinClassNamePredicate;ILjava/lang/Object;)V
 }
 
 public abstract interface class org/jetbrains/kotlin/abi/tools/api/v2/KlibDump {
