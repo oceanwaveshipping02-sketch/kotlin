@@ -205,5 +205,3 @@ fun IrClass.hasInterfaceSuperClass(): Boolean {
     }
     return superClass?.hasInterfaceSuperClass() ?: false
 }
-
-const val NO_FUNC_IDX = -1

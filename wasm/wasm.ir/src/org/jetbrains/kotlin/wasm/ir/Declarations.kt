@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.wasm.ir
 
-import org.jetbrains.kotlin.wasm.ir.WasmDataMode.Active
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
+const val NO_FUNC_IDX = -1
 
 class WasmModule(
     val recGroups: List<List<WasmTypeDeclaration>> = emptyList(),
@@ -55,6 +55,10 @@ sealed class WasmFunction(
         type: WasmSymbolReadOnly<WasmFunctionType>,
         val importPair: WasmImportDescriptor,
     ) : WasmFunction(name, type)
+
+    override fun toString(): String {
+        return name
+    }
 }
 
 class WasmMemory(
@@ -134,7 +138,7 @@ open class WasmGlobal(
     override val name: String,
     val type: WasmType,
     val isMutable: Boolean,
-    val init: List<WasmInstr>,
+    open val init: List<WasmInstr>,
     val importPair: WasmImportDescriptor? = null
 ) : WasmNamedModuleField()
 {
@@ -144,8 +148,26 @@ open class WasmGlobal(
 class DeferredVTableWasmGlobal(name: String, type: WasmRefType, val virtualMethodReferences: List<WasmSymbol<WasmFunction>?>) :
     WasmGlobal(name, type, false, emptyList())
 {
-    override val isDeferred = true
+    var _init: List<WasmInstr>? = null
+
+    override val init: List<WasmInstr> = _init ?: emptyList()
+
+    override val isDeferred = _init != null
     // TODO maybe add abstract DeferredWasmGlobal<T> with materialize(T)
+
+    fun materialize(moduleTableMethodsMap: Map<WasmSymbol<WasmFunction>, Int>) {
+        // TODO try to move actual implementation out of Declarations, but not sure how
+        _init = buildWasmExpression {
+            val location = SourceLocation.NoLocation("Create instance of vtable struct")
+            // FIXME itable is missing here!
+            for (method in virtualMethodReferences) {
+                val methodIdx = if (method == null) NO_FUNC_IDX
+                else
+                    moduleTableMethodsMap[method] ?: error("Module table shall contain method ${method}")
+                buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(methodIdx))
+            }
+        }
+    }
 }
 
 sealed class WasmExport<T : WasmNamedModuleField>(

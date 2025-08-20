@@ -78,8 +78,7 @@ class WasmCompiledFileFragment(
     var stringAddressesAndLengthsInitializer: IdSignature? = null,
     val nonConstantFieldInitializers: MutableList<IdSignature> = mutableListOf(),
 
-    // FIXME Shall not be List: Set or ReferencableElements to avoid duplicates!!!
-    val tableFunctions: MutableList<WasmSymbol<WasmFunction>> = mutableListOf(), // TODO serialize and deserialize
+    val tableFunctions: MutableSet<IdSignature> = mutableSetOf(), // TODO serialize and deserialize
 ) : IrICProgramFragment()
 
 class WasmCompiledModuleFragment(
@@ -206,7 +205,7 @@ class WasmCompiledModuleFragment(
 
         val tables = mutableListOf<WasmTable>()
         val elements = mutableListOf<WasmElement>()
-        val functionsTableValues: List<WasmTable.Value.Function> = getTableFunctionValues()
+        val functionsTableValues = getTableFunctionValues().toList()
         if (functionsTableValues.isNotEmpty()) {
             val tableSize = functionsTableValues.size.toUInt()
             val funcTable = WasmTable(elementType = WasmFuncRef, limits = WasmLimits(tableSize, tableSize))
@@ -214,7 +213,6 @@ class WasmCompiledModuleFragment(
             elements.add(WasmElement(WasmFuncRef, functionsTableValues, WasmElement.Mode.Active(funcTable, 0)))
         }
 
-        // TODO: generate Map from Func to Index (later: "bind" index into tableElements)
         val syntheticTypes = mutableListOf<WasmTypeDeclaration>()
         createAndBindSpecialITableTypes(syntheticTypes)
         val globals = getGlobals(syntheticTypes, functionsTableValues)
@@ -386,34 +384,29 @@ class WasmCompiledModuleFragment(
         val tableFunctionIndicesMap = functionsTableValues.mapIndexed { index, value -> value.function to index }.toMap()
         wasmCompiledFileFragments.forEach { fragment ->
             addAll(fragment.globalFields.elements)
-            addAll(fragment.globalVTables.elements.filter { !it.isDeferred })
-            addAll(fragment.globalVTables.elements
-                       .filter { it is DeferredVTableWasmGlobal }
-                       .map { (it as DeferredVTableWasmGlobal).materialize(tableFunctionIndicesMap) })
+            fragment.globalVTables.elements
+                       .mapNotNull { it as? DeferredVTableWasmGlobal }
+                       .forEach { it.materialize(tableFunctionIndicesMap) }
+            addAll(fragment.globalVTables.elements)
             addAll(fragment.globalClassITables.elements.distinct())
         }
         createRttiTypeAndProcessRttiGlobals(this, additionalTypes)
     }
 
-    fun DeferredVTableWasmGlobal.materialize(moduleTableMethodsMap: Map<WasmSymbol<WasmFunction>, Int>) : WasmGlobal {
-        val initVTableGlobal = buildWasmExpression {
-            val location = SourceLocation.NoLocation("Create instance of vtable struct")
-            // FIXME itable is missing here!
-            for (method in virtualMethodReferences) {
-                val methodIdx = if (method == null) NO_FUNC_IDX
-                else
-                    moduleTableMethodsMap[method] ?: error("Module table shall contain method $method")
-                buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(methodIdx))
+    private fun getTableFunctionValues() = linkedSetOf<WasmTable.Value.Function>().apply {
+        val allFunctionsMap = mutableMapOf<IdSignature, WasmSymbol<WasmFunction>>().apply {
+            for (fragment in wasmCompiledFileFragments) {
+                putAll(fragment.functions.unbound)
             }
         }
-        return WasmGlobal(name, type, isMutable, initVTableGlobal, importPair)
-    }
 
-    private fun getTableFunctionValues() = mutableListOf<WasmSymbol<WasmFunction>>().apply {
-        wasmCompiledFileFragments.forEach { fragment ->
-            addAll(fragment.tableFunctions)
+        for (fragment in wasmCompiledFileFragments) {
+            for (id in fragment.tableFunctions) {
+                val tableFunction = allFunctionsMap.get(id) ?: error("Missing function for $id")
+                add(WasmTable.Value.Function(tableFunction))
+            }
         }
-    }.map { WasmTable.Value.Function(it) }
+    }
 
     private fun createAndExportMemory(exports: MutableList<WasmExport<*>>): WasmMemory {
         val memorySizeInPages = 0
