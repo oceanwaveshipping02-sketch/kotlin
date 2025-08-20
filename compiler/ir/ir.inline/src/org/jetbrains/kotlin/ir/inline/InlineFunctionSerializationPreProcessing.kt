@@ -7,21 +7,27 @@ package org.jetbrains.kotlin.ir.inline
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.LoweringContext
+import org.jetbrains.kotlin.backend.common.ModuleLoweringPass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrInlinedFunctionBlock
 import org.jetbrains.kotlin.ir.types.extractTypeParameters
 import org.jetbrains.kotlin.ir.util.erasedTopLevelCopy
+import org.jetbrains.kotlin.ir.util.erasedTopLevelInlineFunctions
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.originalOfErasedTopLevelCopy
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 
-class InlineFunctionSerializationPreProcessing(private val context: LoweringContext) : IrVisitorVoid(), FileLoweringPass {
-    override fun lower(irFile: IrFile) {
-        irFile.accept(this, null)
+class InlineFunctionSerializationPreProcessing(private val context: LoweringContext) : IrVisitorVoid(), ModuleLoweringPass {
+    private val preprocessedFunctions = mutableListOf<IrSimpleFunction>()
+
+    override fun lower(irModule: IrModuleFragment) {
+        irModule.acceptChildrenVoid(this)
+        irModule.erasedTopLevelInlineFunctions = preprocessedFunctions
     }
 
     override fun visitElement(element: IrElement) {
@@ -33,6 +39,7 @@ class InlineFunctionSerializationPreProcessing(private val context: LoweringCont
         val preprocessed = declaration.copyAndEraseTypeParameters().convertToPrivateTopLevel().erasePrivateSymbols()
         declaration.erasedTopLevelCopy = preprocessed
         preprocessed.originalOfErasedTopLevelCopy = declaration
+        preprocessedFunctions += preprocessed
     }
 
     private fun IrSimpleFunction.copyAndEraseTypeParameters(): IrSimpleFunction {

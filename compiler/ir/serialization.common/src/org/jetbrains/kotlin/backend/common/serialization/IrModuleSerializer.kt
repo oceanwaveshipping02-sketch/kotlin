@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.packageFragmentDescriptor
 import org.jetbrains.kotlin.ir.util.erasedTopLevelCopy
+import org.jetbrains.kotlin.ir.util.erasedTopLevelInlineFunctions
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.library.SerializedIrFile
@@ -41,21 +42,8 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
     }
 
     private fun serializePreparedInlinableFunctions(module: IrModuleFragment): SerializedIrFile {
-        val preparedFunctions = buildList {
-            module.acceptChildrenVoid(object : IrVisitorVoid() {
-                override fun visitElement(element: IrElement) {
-                    element.acceptChildrenVoid(this)
-                }
-
-                override fun visitSimpleFunction(declaration: IrSimpleFunction) {
-                    addIfNotNull(declaration.erasedTopLevelCopy)
-                    super.visitSimpleFunction(declaration)
-                }
-            })
-        }
-
         val fileSerializer = createFileSerializer()
-        return fileSerializer.serializeIrFileWithPreparedInlineFunctions(preparedFunctions)
+        return fileSerializer.serializeIrFileWithPreparedInlineFunctions(module.erasedTopLevelInlineFunctions!!)
     }
 
     fun serializedIrModule(module: IrModuleFragment): SerializedIrModule {
