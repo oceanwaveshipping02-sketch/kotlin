@@ -7,18 +7,12 @@ package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.builtins.FunctionInterfacePackageFragment
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.packageFragmentDescriptor
-import org.jetbrains.kotlin.ir.util.erasedTopLevelCopy
-import org.jetbrains.kotlin.ir.util.erasedTopLevelInlineFunctions
-import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.util.preparedInlineFunctions
 import org.jetbrains.kotlin.library.SerializedIrFile
 import org.jetbrains.kotlin.library.SerializedIrModule
-import org.jetbrains.kotlin.utils.addIfNotNull
 
 abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
     protected val settings: IrSerializationSettings,
@@ -43,7 +37,7 @@ abstract class IrModuleSerializer<Serializer : IrFileSerializer>(
 
     private fun serializePreparedInlinableFunctions(module: IrModuleFragment): SerializedIrFile {
         val fileSerializer = createFileSerializer()
-        return fileSerializer.serializeIrFileWithPreparedInlineFunctions(module.erasedTopLevelInlineFunctions!!)
+        return fileSerializer.serializeIrFileWithPreparedInlineFunctions(module.preparedInlineFunctions!!)
     }
 
     fun serializedIrModule(module: IrModuleFragment): SerializedIrModule {
