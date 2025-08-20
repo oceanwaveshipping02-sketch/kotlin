@@ -78,7 +78,7 @@ class WasmCompiledFileFragment(
     var stringAddressesAndLengthsInitializer: IdSignature? = null,
     val nonConstantFieldInitializers: MutableList<IdSignature> = mutableListOf(),
 
-    val tableFunctions: MutableSet<IdSignature> = mutableSetOf(), // TODO serialize and deserialize
+    val tableFunctions: MutableSet<IdSignature> = mutableSetOf(),
 ) : IrICProgramFragment()
 
 class WasmCompiledModuleFragment(
@@ -149,6 +149,7 @@ class WasmCompiledModuleFragment(
                 when (function) {
                     is WasmFunction.Defined -> definedFunctions.add(function)
                     is WasmFunction.Imported -> importedFunctions.add(function)
+                    is WasmFunction.None -> {}
                 }
             }
         }
@@ -381,16 +382,23 @@ class WasmCompiledModuleFragment(
     }
 
     private fun getGlobals(additionalTypes: MutableList<WasmTypeDeclaration>, functionsTableValues: List<WasmTable.Value.Function>) = mutableListOf<WasmGlobal>().apply {
-        val tableFunctionIndicesMap = functionsTableValues.mapIndexed { index, value -> value.function to index }.toMap()
+        materializeDeferredGlobals(functionsTableValues)
         wasmCompiledFileFragments.forEach { fragment ->
             addAll(fragment.globalFields.elements)
-            fragment.globalVTables.elements
-                       .mapNotNull { it as? DeferredVTableWasmGlobal }
-                       .forEach { it.materialize(tableFunctionIndicesMap) }
             addAll(fragment.globalVTables.elements)
             addAll(fragment.globalClassITables.elements.distinct())
         }
         createRttiTypeAndProcessRttiGlobals(this, additionalTypes)
+    }
+
+    private fun materializeDeferredGlobals(functionsTableValues: List<WasmTable.Value.Function>) {
+        val tableFunctionIndicesMap = functionsTableValues.mapIndexed { index, value -> value.function to index }.toMap()
+        wasmCompiledFileFragments.forEach { fragment ->
+            fragment.globalVTables.elements
+                .filter { it.isDeferred }
+                .map { it as? DeferredVTableWasmGlobal ?: error("Unknown deferred global type: ${it::class}") }
+                .forEach { it.materialize(tableFunctionIndicesMap) }
+        }
     }
 
     private fun getTableFunctionValues() = linkedSetOf<WasmTable.Value.Function>().apply {

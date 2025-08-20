@@ -330,17 +330,17 @@ class DeclarationGenerator(
         val vTableRefGcType = WasmRefType(WasmHeapType.Type(vTableTypeReference))
 
         val global = if (useIndirectFuncRefs) {
-            val methodRefs: List<WasmSymbol<WasmFunction>?> = metadata.virtualMethods.map { method ->
+            val methodRefs: List<WasmSymbol<WasmFunction>> = metadata.virtualMethods.map { method ->
                 if (method.function.modality != Modality.ABSTRACT) {
                     wasmFileCodegenContext.referenceTableFunction(method.function.symbol)
                 } else {
                     check(allowIncompleteImplementations) {
                         "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
                     }
-                    null
+                    WasmFunction.None.symbol
                 }
             }
-            // initializer cannot be created at this stage, as indices of table functions are not known yet
+            // initializer cannot be created at this stage, as indices of table functions are not known yet;
             // it will be created ("materialized") at the module link phase
             DeferredVTableWasmGlobal("<classVTable>", vTableRefGcType, methodRefs)
 

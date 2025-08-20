@@ -56,6 +56,10 @@ sealed class WasmFunction(
         val importPair: WasmImportDescriptor,
     ) : WasmFunction(name, type)
 
+    object None : WasmFunction("<none>", WasmSymbol(WasmFunctionType(emptyList(), emptyList()))) {
+        val symbol = WasmSymbol(this)
+    }
+
     override fun toString(): String {
         return name
     }
@@ -132,36 +136,47 @@ class WasmLocal(
     val isParameter: Boolean
 )
 
-// FIXME update seroialization/deserialization to match new hierarchy
-// TODO try make sealed. Maybe base class needs to be abstract for that (other packages cannot use selaed constructor)
-open class WasmGlobal(
+sealed class AbstractWasmGlobal(
     override val name: String,
     val type: WasmType,
     val isMutable: Boolean,
-    open val init: List<WasmInstr>,
-    val importPair: WasmImportDescriptor? = null
+    val importPair: WasmImportDescriptor? = null,
+    protected var _init: List<WasmInstr>? = null,
 ) : WasmNamedModuleField()
 {
-    open val isDeferred = false
+    val init: List<WasmInstr>
+        get() = _init ?: error("Init is not materialized for deferred global $this")
+
+    val isDeferred = _init == null
 }
 
-class DeferredVTableWasmGlobal(name: String, type: WasmRefType, val virtualMethodReferences: List<WasmSymbol<WasmFunction>?>) :
-    WasmGlobal(name, type, false, emptyList())
+open class WasmGlobal protected constructor(
+    name: String,
+    type: WasmType,
+    isMutable: Boolean,
+    importPair: WasmImportDescriptor? = null,
+    _init: List<WasmInstr>? = null,
+) : AbstractWasmGlobal(name, type, isMutable, importPair, _init) {
+
+    constructor(
+        name: String,
+        type: WasmType,
+        isMutable: Boolean,
+        init: List<WasmInstr>,
+        importPair: WasmImportDescriptor? = null
+    ) : this(name, type, isMutable, _init = init, importPair = importPair)
+}
+
+class DeferredVTableWasmGlobal(name: String, type: WasmType, val virtualMethodReferences: List<WasmSymbol<WasmFunction>>) :
+    WasmGlobal(name, type, false)
 {
-    var _init: List<WasmInstr>? = null
-
-    override val init: List<WasmInstr> = _init ?: emptyList()
-
-    override val isDeferred = _init != null
-    // TODO maybe add abstract DeferredWasmGlobal<T> with materialize(T)
-
     fun materialize(moduleTableMethodsMap: Map<WasmSymbol<WasmFunction>, Int>) {
         // TODO try to move actual implementation out of Declarations, but not sure how
         _init = buildWasmExpression {
             val location = SourceLocation.NoLocation("Create instance of vtable struct")
             // FIXME itable is missing here!
             for (method in virtualMethodReferences) {
-                val methodIdx = if (method == null) NO_FUNC_IDX
+                val methodIdx = if (method == WasmFunction.None) NO_FUNC_IDX
                 else
                     moduleTableMethodsMap[method] ?: error("Module table shall contain method ${method}")
                 buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(methodIdx))

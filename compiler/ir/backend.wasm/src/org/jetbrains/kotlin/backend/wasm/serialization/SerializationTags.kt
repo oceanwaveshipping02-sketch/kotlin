@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.backend.wasm.serialization
 internal object FunctionTags {
     const val DEFINED = 0u
     const val IMPORTED = 1u
+    const val NONE = 2u
 }
 
 internal object TypeDeclarationTags {
@@ -142,4 +143,9 @@ internal object ConstantDataElementTags {
 internal object NullableTags {
     const val NULL = 0u
     const val NOT_NULL = 1u
+}
+
+internal object GlobalTags {
+    const val NORMAL = 0u
+    const val DEFERRED_VTABLE = 1u
 }

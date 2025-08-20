@@ -80,6 +80,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
                         type,
                         deserializeImportDescriptor(),
                     )
+                    FunctionTags.NONE -> WasmFunction.None
                     else -> tagError(tag)
                 }
             }
@@ -89,23 +90,21 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         deserializeNamedModuleField { name, flags ->
             val type = deserializeType()
             val isMutable = flags.consume()
-            val init = deserializeList(::deserializeInstr)
             val importPair = runIf(!flags.consume(), ::deserializeImportDescriptor)
-            WasmGlobal(name, type, isMutable, init, importPair)
+            withTag { tag ->
+                when (tag) {
+                    GlobalTags.NORMAL -> {
+                        val init = deserializeList(::deserializeInstr)
+                        WasmGlobal(name, type, isMutable, init, importPair)
+                    }
+                    GlobalTags.DEFERRED_VTABLE -> {
+                        val methodReferences = deserializeList(::deserializeFunctionSymbol)
+                        DeferredVTableWasmGlobal(name, type, methodReferences)
+                    }
+                    else -> tagError(tag)
+                }
+            }
         }
-
-    // TODO
-//    private fun deserializeDeferredGlobal() =
-//        deserializeNamedModuleField { name, flags ->
-//            val irClassRef = deserializeIdSignature()
-//            // TODO
-//            val type = deserializeType()
-//            val isMutable = flags.consume()
-//            val init = deserializeList(::deserializeInstr)
-//            val importPair = runIf(!flags.consume(), ::deserializeImportDescriptor)
-//            DeferredGlobalVTable()
-//            WasmGlobal(name, type, isMutable, init, importPair)
-//        }
 
     private fun deserializeFunctionType() =
         deserializeNamedModuleField { _, _ ->
@@ -262,7 +261,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
                 ImmediateTags.CONST_U8 -> WasmImmediate.ConstU8(b.readUByte())
                 ImmediateTags.DATA_INDEX -> WasmImmediate.DataIdx(deserializeSymbol(::deserializeInt))
                 ImmediateTags.ELEMENT_INDEX -> WasmImmediate.ElemIdx(deserializeElement())
-                ImmediateTags.FUNC_INDEX -> WasmImmediate.FuncIdx(deserializeSymbol(::deserializeFunction))
+                ImmediateTags.FUNC_INDEX -> WasmImmediate.FuncIdx(deserializeFunctionSymbol())
                 ImmediateTags.GC_TYPE -> WasmImmediate.GcType(deserializeSymbol(::deserializeTypeDeclaration))
                 ImmediateTags.GLOBAL_INDEX -> WasmImmediate.GlobalIdx(deserializeSymbol(::deserializeGlobal))
                 ImmediateTags.HEAP_TYPE -> WasmImmediate.HeapType(deserializeHeapType())
@@ -310,7 +309,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         withTag { tag ->
             when (tag) {
                 TableValueTags.EXPRESSION -> WasmTable.Value.Expression(deserializeList(::deserializeInstr))
-                TableValueTags.FUNCTION -> WasmTable.Value.Function(deserializeSymbol(::deserializeFunction))
+                TableValueTags.FUNCTION -> WasmTable.Value.Function(deserializeFunctionSymbol())
                 else -> tagError(tag)
             }
         }
@@ -601,6 +600,14 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
             }
         }
 
+    private fun deserializeFunctionSymbol(): WasmSymbol<WasmFunction> =
+        deserializeReference {
+            withFlags { flags ->
+                val owner = if (flags.consume()) null else deserializeFunction()
+                if (owner is WasmFunction.None) WasmFunction.None.symbol else WasmSymbol(owner)
+            }
+        }
+
     private fun deserializeCompiledFileFragment() = WasmCompiledFileFragment(
         fragmentTag = deserializeNullable(::deserializeString),
         functions = deserializeFunctions(),
@@ -629,12 +636,12 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         stringPoolFieldInitializer = deserializeNullable(::deserializeIdSignature),
         stringAddressesAndLengthsInitializer = deserializeNullable(::deserializeIdSignature),
         nonConstantFieldInitializers = deserializeList(::deserializeIdSignature),
+        tableFunctions = deserializeSet(::deserializeIdSignature),
     )
 
     private fun deserializeFunctions() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunction)
     private fun deserializeGlobalFields() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
     private fun deserializeGlobalVTables() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
-    private fun deserializeDeferredGlobalVTables(): Nothing = TODO("deserializeReferencableElements(::deserializeIdSignature, ::deserializeDeferredGlobal)")
     private fun deserializeGlobalClassITables() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeGlobal)
     private fun deserializeFunctionTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunctionType)
     private fun deserializeGcTypes() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeTypeDeclaration)
