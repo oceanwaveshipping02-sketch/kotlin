@@ -3441,6 +3441,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val incompatibilityType: ExpectActualAnnotationsIncompatibilityType<FirAnnotation>
     }
 
+    interface ActualIgnorabilityNotMatchExpect : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ActualIgnorabilityNotMatchExpect::class
+        val expectSymbol: KaSymbol
+        val expectIgnorability: String
+        val actualSymbol: KaSymbol
+        val actualIgnorability: String
+    }
+
     interface OptionalDeclarationOutsideOfAnnotationEntry : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OptionalDeclarationOutsideOfAnnotationEntry::class
     }

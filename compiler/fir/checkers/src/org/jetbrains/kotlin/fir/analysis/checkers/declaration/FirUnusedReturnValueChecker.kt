@@ -14,14 +14,17 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.directOverriddenSymbolsSafe
+import org.jetbrains.kotlin.fir.analysis.checkers.resolvedStatus
 import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isActual
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.originalOrSelf
 import org.jetbrains.kotlin.fir.references.resolved
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.types.ConeErrorType
@@ -35,6 +38,50 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.ReturnValueStatus
+
+object FirMustUseExpectActualChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
+        if (context.languageVersionSettings.getFlag(AnalysisFlags.returnValueCheckerMode) == ReturnValueCheckerMode.DISABLED) return
+
+        when (declaration) {
+            is FirCallableDeclaration -> checkActualCallable(declaration)
+            is FirTypeAlias -> checkActualTypealias(declaration)
+            else -> Unit
+        }
+    }
+
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    private fun checkActualTypealias(declaration: FirTypeAlias) {
+        if (!declaration.isActual) return
+        println(declaration.render())
+    }
+
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    private fun checkActualCallable(declaration: FirCallableDeclaration) {
+        if (!declaration.isActual) return
+        val actualStatus = declaration.status.returnValueStatus
+        val expectSymbol = declaration.symbol.getSingleMatchedExpectForActualOrNull() ?: return
+        val expectStatus = expectSymbol.resolvedStatus?.returnValueStatus ?: return
+        if (expectStatus cannotBeActualizedWith actualStatus)
+            reporter.reportOn(
+                declaration.source,
+                FirErrors.ACTUAL_IGNORABILITY_NOT_MATCH_EXPECT,
+                expectSymbol,
+                expectStatus.toString(),
+                declaration.symbol,
+                actualStatus.toString()
+            )
+    }
+
+    private infix fun ReturnValueStatus.cannotBeActualizedWith(actualStatus: ReturnValueStatus): Boolean {
+        val isCompatible = when (this) {
+            ReturnValueStatus.MustUse -> actualStatus == ReturnValueStatus.MustUse
+            ReturnValueStatus.ExplicitlyIgnorable, ReturnValueStatus.Unspecified -> actualStatus != ReturnValueStatus.MustUse
+        }
+        return !isCompatible
+    }
+}
 
 object FirReturnValueOverrideChecker : FirCallableDeclarationChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)

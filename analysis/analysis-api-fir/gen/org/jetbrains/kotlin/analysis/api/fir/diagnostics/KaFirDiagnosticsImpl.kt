@@ -4125,6 +4125,15 @@ internal class ActualAnnotationsNotMatchExpectImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ActualAnnotationsNotMatchExpect
 
+internal class ActualIgnorabilityNotMatchExpectImpl(
+    override val expectSymbol: KaSymbol,
+    override val expectIgnorability: String,
+    override val actualSymbol: KaSymbol,
+    override val actualIgnorability: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ActualIgnorabilityNotMatchExpect
+
 internal class OptionalDeclarationOutsideOfAnnotationEntryImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,

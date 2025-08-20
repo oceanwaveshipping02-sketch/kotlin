@@ -9519,6 +9519,41 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/crv/expectActual")
+      @TestDataPath("$PROJECT_ROOT")
+      public class ExpectActual {
+        @Test
+        @TestMetadata("actualizeInheritance.kt")
+        public void testActualizeInheritance() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritance.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeInheritanceUnspecified.kt")
+        public void testActualizeInheritanceUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritanceUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeSpecified.kt")
+        public void testActualizeSpecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeSpecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeUnspecified.kt")
+        public void testActualizeUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("inheritanceInCommon.kt")
+        public void testInheritanceInCommon() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/inheritanceInCommon.kt");
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/crv/otherAnnotations")
       @TestDataPath("$PROJECT_ROOT")
       public class OtherAnnotations {

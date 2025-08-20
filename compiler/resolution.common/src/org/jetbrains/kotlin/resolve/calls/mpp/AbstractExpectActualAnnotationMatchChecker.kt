@@ -29,6 +29,8 @@ object AbstractExpectActualAnnotationMatchChecker {
         StandardClassIds.Annotations.ActualizeByJvmBuiltinProvider,
         StandardClassIds.Annotations.jsExport,
         StandardClassIds.Annotations.jsExportIgnore,
+        StandardClassIds.Annotations.MustUseReturnValue,   // Checked by FirMustUseExpectActualChecker
+        StandardClassIds.Annotations.IgnorableReturnValue, // Checked by FirMustUseExpectActualChecker
         OptInNames.OPT_IN_CLASS_ID,
         OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID,
     )

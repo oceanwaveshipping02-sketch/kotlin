@@ -9791,6 +9791,46 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/crv/expectActual")
+      @TestDataPath("$PROJECT_ROOT")
+      public class ExpectActual {
+        @Test
+        @TestMetadata("actualizeInheritance.kt")
+        public void testActualizeInheritance() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritance.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeInheritanceUnspecified.kt")
+        public void testActualizeInheritanceUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritanceUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeSpecified.kt")
+        public void testActualizeSpecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeSpecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeUnspecified.kt")
+        public void testActualizeUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeUnspecified.kt");
+        }
+
+        @Test
+        public void testAllFilesPresentInExpectActual() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/crv/expectActual"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("inheritanceInCommon.kt")
+        public void testInheritanceInCommon() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/inheritanceInCommon.kt");
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/crv/otherAnnotations")
       @TestDataPath("$PROJECT_ROOT")
       public class OtherAnnotations {
