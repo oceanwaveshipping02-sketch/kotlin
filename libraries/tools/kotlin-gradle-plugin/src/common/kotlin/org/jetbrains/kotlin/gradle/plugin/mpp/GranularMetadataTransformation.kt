@@ -123,6 +123,7 @@ internal class GranularMetadataTransformation(
         val uklibFragmentAttributes: Set<String>,
         val computeTransformedLibraryChecksum: Boolean,
         val kmpResolutionStrategy: KmpResolutionStrategy,
+        val crossCompilationData: KotlinProjectSharedDataProvider<CrossCompilationData>,
     ) {
         constructor(project: Project, kotlinSourceSet: KotlinSourceSet, transformProjectDependencies: Boolean = true) : this(
             build = project.currentBuild,
@@ -148,6 +149,8 @@ internal class GranularMetadataTransformation(
             uklibFragmentAttributes = kotlinSourceSet.metadataFragmentAttributes.map { it.convertToStringForConsumption() }.toSet(),
             computeTransformedLibraryChecksum = project.kotlinPropertiesProvider.computeTransformedLibraryChecksum,
             kmpResolutionStrategy = project.kotlinPropertiesProvider.kmpResolutionStrategy,
+            crossCompilationData = project.kotlinSecondaryVariantsDataSharing
+                .consumeCrossCompilationMetadata(kotlinSourceSet.internal.resolvableMetadataConfiguration)
         )
     }
 
