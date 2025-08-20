@@ -158,7 +158,7 @@ open class KtCommonFile(viewProvider: FileViewProvider, val isCompiled: Boolean)
         val stub = greenStub
         if (stub != null) {
             for (stubElement in stub.childrenStubs) {
-                val stubType = stubElement.stubType
+                val stubType = @Suppress("DEPRECATION") stubElement.stubType
                 when (stubType) {
                     // Required element found
                     elementType -> {
@@ -201,7 +201,7 @@ open class KtCommonFile(viewProvider: FileViewProvider, val isCompiled: Boolean)
     ): P? {
         val stub = greenStub
         if (stub != null) {
-            val importListStub = stub.findChildStubByType(elementType)
+            val importListStub = @Suppress("DEPRECATION") stub.findChildStubByType(elementType)
             return importListStub?.psi
         }
         return findChildByClass(elementClass)
@@ -244,7 +244,10 @@ open class KtCommonFile(viewProvider: FileViewProvider, val isCompiled: Boolean)
         super.getStub()
     }
 
-    protected open val greenStub: KotlinFileStub? get() = getFileStub(this::getGreenStub)
+    protected open val greenStub: KotlinFileStub? get() = getFileStub(
+            @Suppress("DEPRECATION")
+            this::getGreenStub
+        )
 
     private fun getFileStub(getter: () -> StubElement<*>?): KotlinFileStub? {
         if (virtualFile !is VirtualFileWithId) return null
@@ -329,6 +332,7 @@ private fun KtImportList.computeHasImportAlias(): Boolean {
     val stub = greenStub
     if (stub != null) {
         return stub.childrenStubs.any {
+            @Suppress("DEPRECATION")
             it is KotlinImportDirectiveStub && it.findChildStubByType(KtStubBasedElementTypes.IMPORT_ALIAS) != null
         }
     }

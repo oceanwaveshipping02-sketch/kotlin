@@ -19,9 +19,11 @@ val STUB_TO_STRING_PREFIX = "KotlinStub$"
 open class KotlinStubBaseImpl<T : KtElementImplStub<*>>(parent: StubElement<*>?, elementType: IStubElementType<*, *>) :
     StubBase<T>(parent, elementType) {
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun getStubType(): IStubElementType<out StubElement<*>, *> =
         super.getStubType() as IStubElementType<out StubElement<*>, *>
 
+    @Suppress("DEPRECATION")
     override fun toString(): String {
         val stubInterface = this::class.java.interfaces.single { it.name.contains("Stub") }
         val propertiesValues = renderPropertyValues(stubInterface)
