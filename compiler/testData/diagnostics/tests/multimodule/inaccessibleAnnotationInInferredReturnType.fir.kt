@@ -12,7 +12,7 @@ fun f(): @Anno String = ""
 
 // MODULE: c(b)
 // FILE: c.kt
-fun g() = f()
+fun g() = <!MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION_ERROR!>f<!>()
 
 fun local() {
     val x = f()
