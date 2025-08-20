@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.konan.file.withZipFileSystem
 import org.jetbrains.kotlin.konan.library.KLIB_TARGETS_FOLDER_NAME
 import org.jetbrains.kotlin.library.IrKotlinLibraryLayout
 import org.jetbrains.kotlin.library.KLIB_IR_FOLDER_NAME
+import org.jetbrains.kotlin.library.KLIB_IR_OF_INLINEABLE_FUNS_DIR_NAME
 import org.jetbrains.kotlin.library.KLIB_METADATA_FOLDER_NAME
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.library.KotlinLibrary
-import java.util.LinkedList
 import org.jetbrains.kotlin.konan.file.File as KFile
 
 /**
@@ -63,7 +63,8 @@ private fun KFile.collectTopLevelElements(irInfo: KlibIrInfo?): List<KlibElement
 
     return topLevelEntries.map { topLevelEntry ->
         when (val topLevelEntryName = topLevelEntry.name) {
-            KLIB_IR_FOLDER_NAME -> buildIrElement(topLevelEntry, irInfo)
+            KLIB_IR_FOLDER_NAME -> buildIrElement(name = "IR (main)", topLevelEntry)
+            KLIB_IR_OF_INLINEABLE_FUNS_DIR_NAME -> buildIrElement(name = "IR (inlinable functions)", topLevelEntry)
             KLIB_METADATA_FOLDER_NAME -> buildElement(name = "Metadata", topLevelEntry)
             KLIB_TARGETS_FOLDER_NAME -> buildElement(name = "Native-specific binary data", topLevelEntry)
             KLIB_MANIFEST_FILE_NAME -> buildElement(name = "Manifest file", topLevelEntry)
@@ -87,7 +88,7 @@ private fun buildElement(name: String, entry: KFile): KlibElementWithSize {
     return KlibElementWithSize(name, entry.cumulativeSize())
 }
 
-private fun buildIrElement(entry: KFile, irInfo: KlibIrInfo?): KlibElementWithSize {
+private fun buildIrElement(name: String, entry: KFile): KlibElementWithSize {
     val nestedElements = ArrayList<KlibElementWithSize>()
 
     entry.entries.mapTo(nestedElements) { childEntry ->
@@ -106,9 +107,5 @@ private fun buildIrElement(entry: KFile, irInfo: KlibIrInfo?): KlibElementWithSi
         buildElement(prettyName, childEntry)
     }
 
-    irInfo?.meaningfulInlineFunctionBodiesSize?.let { estimationOfInlineBodiesSizes ->
-        nestedElements += KlibElementWithSize("IR bodies (inline functions only)", estimationOfInlineBodiesSizes)
-    }
-
-    return KlibElementWithSize("IR", nestedElements.sortedBy { it.name })
+    return KlibElementWithSize(name, nestedElements.sortedBy { it.name })
 }
