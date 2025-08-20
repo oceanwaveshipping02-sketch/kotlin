@@ -22,7 +22,7 @@ internal object ToolsV2 : AbiToolsV2 {
         classfiles: Iterable<File>,
         filters: AbiFilters,
     ) {
-        printJvmDump(appendable, classfiles, filters = filters)
+        printJvmDump(appendable, classfiles, emptyList(), filters)
     }
 
     override fun <T : Appendable> printJvmDump(
