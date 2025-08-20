@@ -446,6 +446,8 @@ enum class LanguageFeature(
 
     IrRichCallableReferencesInKlibs(sinceVersion = KOTLIN_2_3, "KT-72734"), // KT-72734, KT-74384, KT-74392
 
+    AllowCallingJavaOpenSealedClassConstructor(sinceVersion = KOTLIN_2_3, "KT-78879"),
+
     // 2.4
 
     ForbidExposingLessVisibleTypesInInline(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-283"),
@@ -460,6 +462,7 @@ enum class LanguageFeature(
     ForbidExposingPackagePrivateInInternal(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-271"),
     CheckPackageInfoNullnessAnnotations(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77729"),
     ForbidTypeAliasWithMissingDependencyType(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-79781"),
+    ProperExhaustivenessCheckForJavaOpenSealedClass(sinceVersion = KOTLIN_2_4, enabledInProgressiveMode = true,"KT-78879"),
 
     // 2.5
 
