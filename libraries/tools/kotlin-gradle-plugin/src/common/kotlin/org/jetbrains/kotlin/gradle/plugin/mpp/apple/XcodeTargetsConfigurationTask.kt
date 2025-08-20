@@ -9,7 +9,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import org.gradle.api.DefaultTask
-import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.Logger
@@ -20,7 +19,6 @@ import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinProjectSetupAction
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
@@ -28,6 +26,7 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.UsesKotlinToolingDiagnosti
 import org.jetbrains.kotlin.gradle.plugin.ide.Idea222Api
 import org.jetbrains.kotlin.gradle.plugin.ide.ideaImportDependsOn
 import org.jetbrains.kotlin.gradle.plugin.launch
+import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XcodeTargetsConfigurationTask.Companion.TASK_NAME
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
@@ -47,31 +46,68 @@ import javax.inject.Inject
  */
 internal val XcodeTargetsConfigurationSetupAction = KotlinProjectSetupAction {
     launch {
-        val hasAppleTargets = multiplatformExtension.awaitTargets().any { it is KotlinNativeTarget && it.konanTarget.family.isAppleFamily }
-        val projectPath = project.xcodeProjectPath
-        if (hasAppleTargets && projectPath != null) {
-            locateOrRegisterTask<XcodeTargetsConfigurationTask>(
-                TASK_NAME,
-                invokeWhenRegistered = {
-                    @OptIn(Idea222Api::class)
-                    ideaImportDependsOn(this)
-                },
-                configureTask = {
-                    group = "xcode"
-                    description = "Checks for configuration mismatches between Xcode and Kotlin Gradle project"
-
-                    appleTargets.set(multiplatformExtension.appleTargets.map { it.konanTarget })
-                    iosProjectPath.set(projectPath)
-                    pbxprojContent.set(
-                        providers.of(PlistToJsonValueSource::class.java) {
-                            it.parameters.pbxprojFile.set(projectPath.resolve("project.pbxproj"))
-                        }
-                    )
-                }
-            )
+        // Early return if not applicable
+        if (!shouldSetupXcodeConfiguration()) {
+            return@launch
         }
+
+        val appleTargets = getAppleTargetsWithFrameworkBinaries()
+        val projectPath = project.xcodeProjectPath ?: return@launch
+
+        registerXcodeConfigurationTask(appleTargets, projectPath)
     }
 }
+
+private suspend fun Project.shouldSetupXcodeConfiguration(): Boolean {
+    val targets = multiplatformExtension
+        .awaitTargets()
+        .filterIsInstance<KotlinNativeTarget>()
+        .filter { it.konanTarget.family.isAppleFamily }
+
+    if (targets.isEmpty()) return false
+
+    val hasBinaries = targets.flatMap { it.binaries }.filterIsInstance<Framework>().isNotEmpty()
+    if (!hasBinaries) return false
+
+    return project.xcodeProjectPath != null
+}
+
+private suspend fun Project.getAppleTargetsWithFrameworkBinaries(): List<KonanTarget> {
+    return multiplatformExtension
+        .awaitTargets()
+        .filterIsInstance<KotlinNativeTarget>()
+        .filter { target ->
+            target.konanTarget.family.isAppleFamily &&
+                    target.binaries.filterIsInstance<Framework>().isNotEmpty()
+        }
+        .map { it.konanTarget }
+}
+
+private fun Project.registerXcodeConfigurationTask(
+    targets: List<KonanTarget>,
+    projectPath: File,
+) {
+    locateOrRegisterTask<XcodeTargetsConfigurationTask>(
+        TASK_NAME,
+        invokeWhenRegistered = {
+            @OptIn(Idea222Api::class)
+            ideaImportDependsOn(this)
+        },
+        configureTask = {
+            group = "xcode"
+            description = "Checks for configuration mismatches between Xcode and Kotlin Gradle project"
+
+            appleTargets.set(targets)
+            iosProjectPath.set(projectPath)
+            pbxprojContent.set(createPbxprojContentProvider(projectPath))
+        }
+    )
+}
+
+private fun Project.createPbxprojContentProvider(projectPath: File) =
+    providers.of(PlistToJsonValueSource::class.java) {
+        it.parameters.pbxprojFile.set(projectPath.resolve("project.pbxproj"))
+    }
 
 /**
  * A Gradle [ValueSource] that executes the `plutil` command to convert an Xcode
@@ -335,8 +371,3 @@ private val Project.xcodeProjectPath: File?
 
         return null
     }
-
-private val KotlinMultiplatformExtension.appleTargets: DomainObjectCollection<KotlinNativeTarget>
-    get() = targets
-        .withType(KotlinNativeTarget::class.java)
-        .matching { it.konanTarget.family.isAppleFamily }

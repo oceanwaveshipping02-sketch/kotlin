@@ -251,7 +251,7 @@ internal object KotlinToolingDiagnostics {
                             else -> "'iOS Application'"
                         }
                     }.map { app ->
-                        "Add the following new application targets to your Xcode project: $app}."
+                        "Add the following new application targets to your Xcode project: $app."
                     }.distinct()
                 }
                 .documentationLink(URI("https://kotl.in/xcode-target-setup")) { url ->
