@@ -403,7 +403,7 @@ class ExportModelToTsDeclarations(private val moduleKind: ModuleKind) {
     }
 
     private fun ExportedRegularClass.toReadonlyProperty(): ExportedProperty {
-        require(innerClassReference != null) { "Can't create readonly property for non-inner class" }
+        val innerClassReference = innerClassReference ?: error("Can't create readonly property for non-inner class")
         val allPublicConstructors = members.asSequence()
             .filterIsInstance<ExportedConstructor>()
             .filterNot { it.isProtected }
@@ -513,11 +513,9 @@ class ExportModelToTsDeclarations(private val moduleKind: ModuleKind) {
             )
         }]"
 
-        is ExportedType.TypeParameter -> if (constraint == null) {
-            name
-        } else {
-            "$name extends ${constraint.toTypeScript(indent, isInCommentContext)}"
-        }
+        is ExportedType.TypeParameter -> constraint?.let {
+            "$name extends ${it.toTypeScript(indent, isInCommentContext)}"
+        } ?: name
     }
 
     private fun generateMetadataNamespace(members: List<ExportedDeclaration>): ExportedNamespace =
