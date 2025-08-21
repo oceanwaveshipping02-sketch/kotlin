@@ -453,13 +453,9 @@ fun serializeModuleIntoKlib(
                     JsKlibCheckers.makeChecker(
                         irDiagnosticReporter,
                         configuration,
-                        // Should IrIntraModuleInlinerBeforeKlibSerialization or IrCrossModuleInlinerBeforeKlibSerialization be set,
-                        // then calls should have already been checked during pre-serialization,
+                        // Should IrIntraModuleInlinerBeforeKlibSerialization be set, then calls should have already been checked during pre-serialization,
                         // and there's no need to raise duplicates of those warnings here.
-                        doCheckCalls = !configuration.languageVersionSettings.let {
-                            it.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization) ||
-                                    it.supportsFeature(LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization)
-                        },
+                        doCheckCalls = !configuration.languageVersionSettings.supportsFeature(LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization),
                         doModuleLevelChecks = true,
                         cleanFilesIrData,
                         moduleExportedNames,
