@@ -290,7 +290,7 @@ class MppCrossCompilationPublicationIT : KGPBaseTest() {
     ) {
         val multiplatformLibrary = publishMultiplatformLibrary(
             gradleVersion,
-            test = {
+            projectSetup = {
                 val subprojectWithCinterops = project("empty", gradleVersion) {
                     embedDirectoryFromTestData("cinterop-lib/cinterop", "src/nativeInterop/cinterop")
                     embedDirectoryFromTestData("cinterop-lib/src", "include")
