@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.wasm.serialization
 
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.*
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmCompiledModuleFragment.ReferencableElements
+import org.jetbrains.kotlin.backend.wasm.utils.identityHashSetOf
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
@@ -80,7 +81,6 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
                         type,
                         deserializeImportDescriptor(),
                     )
-                    FunctionTags.NONE -> WasmFunction.None
                     else -> tagError(tag)
                 }
             }
@@ -98,8 +98,8 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
                         WasmGlobal(name, type, isMutable, init, importPair)
                     }
                     GlobalTags.DEFERRED_VTABLE -> {
-                        val methodReferences = deserializeList(::deserializeFunctionSymbol)
-                        DeferredVTableWasmGlobal(name, type, methodReferences)
+                        val initTemplate = deserializeList(::deserializeInstr)
+                        DeferredVTableWasmGlobal(name, type, initTemplate)
                     }
                     else -> tagError(tag)
                 }
@@ -388,6 +388,15 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         return set
     }
 
+    private inline fun <T> deserializeIdentityHashSet(itemDeserializeFunc: () -> T): MutableSet<T> {
+        val size = deserializeInt()
+        val set = identityHashSetOf<T>(size)
+        repeat(size) {
+            set.add(itemDeserializeFunc())
+        }
+        return set
+    }
+
     private inline fun <K, V> deserializeMap(deserializeKeyFunc: () -> K, deserializeValueFunc: () -> V): LinkedHashMap<K, V> {
         val size = deserializeInt()
         val map = newLinkedHashMapWithExpectedSize<K, V>(size)
@@ -600,13 +609,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
             }
         }
 
-    private fun deserializeFunctionSymbol(): WasmSymbol<WasmFunction> =
-        deserializeReference {
-            withFlags { flags ->
-                val owner = if (flags.consume()) null else deserializeFunction()
-                if (owner is WasmFunction.None) WasmFunction.None.symbol else WasmSymbol(owner)
-            }
-        }
+    private fun deserializeFunctionSymbol(): WasmSymbol<WasmFunction> = deserializeSymbol(::deserializeFunction)
 
     private fun deserializeCompiledFileFragment() = WasmCompiledFileFragment(
         fragmentTag = deserializeNullable(::deserializeString),
@@ -636,7 +639,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
         stringPoolFieldInitializer = deserializeNullable(::deserializeIdSignature),
         stringAddressesAndLengthsInitializer = deserializeNullable(::deserializeIdSignature),
         nonConstantFieldInitializers = deserializeList(::deserializeIdSignature),
-        tableFunctions = deserializeSet(::deserializeIdSignature),
+        tableFunctions = deserializeIdentityHashSet(::deserializeFunctionSymbol),
     )
 
     private fun deserializeFunctions() = deserializeReferencableAndDefinable(::deserializeIdSignature, ::deserializeFunction)

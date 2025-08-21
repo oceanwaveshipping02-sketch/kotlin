@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.common.serialization.Hash128Bits
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmCompiledModuleFragment.*
 import org.jetbrains.kotlin.backend.wasm.utils.fitsLatin1
+import org.jetbrains.kotlin.backend.wasm.utils.identityHashSetOf
 import org.jetbrains.kotlin.ir.backend.js.ic.IrICProgramFragment
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
@@ -78,7 +79,7 @@ class WasmCompiledFileFragment(
     var stringAddressesAndLengthsInitializer: IdSignature? = null,
     val nonConstantFieldInitializers: MutableList<IdSignature> = mutableListOf(),
 
-    val tableFunctions: MutableSet<IdSignature> = mutableSetOf(),
+    val tableFunctions: MutableSet<WasmSymbol<WasmFunction>> = identityHashSetOf(),
 ) : IrICProgramFragment()
 
 class WasmCompiledModuleFragment(
@@ -149,7 +150,6 @@ class WasmCompiledModuleFragment(
                 when (function) {
                     is WasmFunction.Defined -> definedFunctions.add(function)
                     is WasmFunction.Imported -> importedFunctions.add(function)
-                    is WasmFunction.None -> {}
                 }
             }
         }
@@ -402,15 +402,8 @@ class WasmCompiledModuleFragment(
     }
 
     private fun getTableFunctionValues() = linkedSetOf<WasmTable.Value.Function>().apply {
-        val allFunctionsMap = mutableMapOf<IdSignature, WasmSymbol<WasmFunction>>().apply {
-            for (fragment in wasmCompiledFileFragments) {
-                putAll(fragment.functions.unbound)
-            }
-        }
-
         for (fragment in wasmCompiledFileFragments) {
-            for (id in fragment.tableFunctions) {
-                val tableFunction = allFunctionsMap.get(id) ?: error("Missing function for $id")
+            for (tableFunction in fragment.tableFunctions) {
                 add(WasmTable.Value.Function(tableFunction))
             }
         }

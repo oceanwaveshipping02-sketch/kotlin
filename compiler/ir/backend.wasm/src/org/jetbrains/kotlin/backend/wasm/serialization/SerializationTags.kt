@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.backend.wasm.serialization
 internal object FunctionTags {
     const val DEFINED = 0u
     const val IMPORTED = 1u
-    const val NONE = 2u
 }
 
 internal object TypeDeclarationTags {

@@ -276,7 +276,6 @@ class DeclarationGenerator(
                 for (method in wasmModuleMetadataCache.getInterfaceMetadata(supportedSpecialInterface).methods) {
                     addInterfaceMethod(metadata, builder, method, location)
                 }
-                // TODO do th same as with vtable
                 builder.buildStructNew(wasmFileCodegenContext.referenceVTableGcType(supportedSpecialInterface), location)
             } else {
                 builder.buildRefNull(WasmHeapType.Simple.None, location)
@@ -329,40 +328,40 @@ class DeclarationGenerator(
         val vTableTypeReference = wasmFileCodegenContext.referenceVTableGcType(symbol)
         val vTableRefGcType = WasmRefType(WasmHeapType.Type(vTableTypeReference))
 
-        val global = if (useIndirectFuncRefs) {
-            val methodRefs: List<WasmSymbol<WasmFunction>> = metadata.virtualMethods.map { method ->
+        val initVTableGlobal = buildWasmExpression {
+            val location = SourceLocation.NoLocation("Create instance of vtable struct")
+            buildSpecialITableInit(metadata, this, location)
+            for (method in metadata.virtualMethods) {
                 if (method.function.modality != Modality.ABSTRACT) {
-                    wasmFileCodegenContext.referenceTableFunction(method.function.symbol)
+                    buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(wasmFileCodegenContext.referenceFunction(method.function.symbol)))
                 } else {
                     check(allowIncompleteImplementations) {
                         "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
                     }
-                    WasmFunction.None.symbol
+                    //This erased by DCE so abstract version appeared in non-abstract class
+                    buildRefNull(WasmHeapType.Simple.NoFunc, location)
                 }
             }
-            // initializer cannot be created at this stage, as indices of table functions are not known yet;
-            // it will be created ("materialized") at the module link phase
-            DeferredVTableWasmGlobal("<classVTable>", vTableRefGcType, methodRefs)
-
-        } else { // TODO refactor to two methods?
-            val initVTableGlobal = buildWasmExpression {
-                val location = SourceLocation.NoLocation("Create instance of vtable struct")
-                buildSpecialITableInit(metadata, this, location) // FIXME also add to deferred?
-                for (method in metadata.virtualMethods) {
-                    if (method.function.modality != Modality.ABSTRACT) {
-                        buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(wasmFileCodegenContext.referenceFunction(method.function.symbol)))
-                    } else {
-                        check(allowIncompleteImplementations) {
-                            "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
-                        }
-                        //This erased by DCE so abstract version appeared in non-abstract class
-                        buildRefNull(WasmHeapType.Simple.NoFunc, location)
-                    }
-                }
-                buildStructNew(vTableTypeReference, location)
-            }
-            WasmGlobal("<classVTable>", vTableRefGcType, false, initVTableGlobal)
+            buildStructNew(vTableTypeReference, location)
         }
+        val global = if (useIndirectFuncRefs) {
+            // the right initializer for this mode shall set indices of table functions instead of func refs.
+            // But these indices are not known until the module link phase, so we defer the "materialization"
+            // of the init until that time and use the ref-based (incorrect for "shared" structs) initializer
+            // version as the "template" for the later modification
+            initVTableGlobal
+                .filter { it.operator == WasmOp.REF_FUNC && it.immediates.size == 1}
+                .mapNotNull { it.immediates[0] as? WasmImmediate.FuncIdx }
+                .map { it.value }
+                .forEach {
+                    wasmFileCodegenContext.addTableFunction(it)
+                }
+
+            DeferredVTableWasmGlobal("<classVTable>", vTableRefGcType, initTemplate = initVTableGlobal)
+        } else {
+            WasmGlobal("<classVTable>", vTableRefGcType, false, init = initVTableGlobal)
+        }
+
         wasmFileCodegenContext.defineGlobalVTable(
             irClass = symbol,
             wasmGlobal = global

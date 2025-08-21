@@ -168,7 +168,6 @@ class WasmSerializer(outputStream: OutputStream) {
                 is WasmFunction.Imported -> withTag(FunctionTags.IMPORTED) {
                     serializeWasmImportDescriptor(func.importPair)
                 }
-                is WasmFunction.None -> setTag(FunctionTags.NONE)
             }
         }
 
@@ -184,7 +183,7 @@ class WasmSerializer(outputStream: OutputStream) {
             if (global.isDeferred) {
                 global as? DeferredVTableWasmGlobal ?: error("Global type ${global::class} is not supported by serialization")
                 setTag(GlobalTags.DEFERRED_VTABLE)
-                serializeList(global.virtualMethodReferences, ::serializeWasmFunctionSymbol)
+                serializeList(global.initTemplate, ::serializeWasmInstr)
             } else {
                 // if DeferredVTableWasmGlobal is already materialized, it may be converted to "normal" WasmGlobal
                 setTag(GlobalTags.NORMAL)
@@ -653,7 +652,7 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeNullable(stringPoolFieldInitializer, ::serializeIdSignature)
             serializeNullable(stringAddressesAndLengthsInitializer, ::serializeIdSignature)
             serializeList(nonConstantFieldInitializers, ::serializeIdSignature)
-            serializeSet(tableFunctions, ::serializeIdSignature)
+            serializeSet(tableFunctions, ::serializeWasmFunctionSymbol)
         }
 
     private fun serializeRttiElements(rttiElements: RttiElements) {

@@ -56,10 +56,6 @@ sealed class WasmFunction(
         val importPair: WasmImportDescriptor,
     ) : WasmFunction(name, type)
 
-    object None : WasmFunction("<none>", WasmSymbol(WasmFunctionType(emptyList(), emptyList()))) {
-        val symbol = WasmSymbol(this)
-    }
-
     override fun toString(): String {
         return name
     }
@@ -167,19 +163,38 @@ open class WasmGlobal protected constructor(
     ) : this(name, type, isMutable, _init = init, importPair = importPair)
 }
 
-class DeferredVTableWasmGlobal(name: String, type: WasmType, val virtualMethodReferences: List<WasmSymbol<WasmFunction>>) :
+// Global with incomplete initializer. It must be "materialized" by replacing each func ref to the corresponding index in the function table
+class DeferredVTableWasmGlobal(name: String, type: WasmType, val initTemplate: List<WasmInstr>) :
     WasmGlobal(name, type, false)
 {
     fun materialize(moduleTableMethodsMap: Map<WasmSymbol<WasmFunction>, Int>) {
-        // TODO try to move actual implementation out of Declarations, but not sure how
+        fun WasmInstr.isRefNullNoFunc() : Boolean {
+            if (operator != WasmOp.REF_NULL) return false
+            if (immediates.size != 1) return false
+            val immediate = immediates[0]
+            if (immediate !is WasmImmediate.HeapType) return false
+            return immediate.value == WasmHeapType.Simple.NoFunc
+        }
+
+        fun WasmInstr.refFuncValue(): WasmSymbol<WasmFunction> {
+            check (operator == WasmOp.REF_FUNC)
+            check (immediates.size == 1)
+            val immediate = immediates[0]
+            check (immediate is WasmImmediate.FuncIdx)
+            return immediate.value
+        }
+
+        fun getRefFuncTableIndex(refFuncInstr: WasmInstr): Int =
+            refFuncInstr.refFuncValue().let { moduleTableMethodsMap[it] ?: error("Module table shall contain method ${it}") }
+
         _init = buildWasmExpression {
-            val location = SourceLocation.NoLocation("Create instance of vtable struct")
-            // FIXME itable is missing here!
-            for (method in virtualMethodReferences) {
-                val methodIdx = if (method == WasmFunction.None) NO_FUNC_IDX
-                else
-                    moduleTableMethodsMap[method] ?: error("Module table shall contain method ${method}")
-                buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(methodIdx))
+            for (instr in initTemplate) {
+                val location = instr.location ?: SourceLocation.NoLocation("DeferredVTableWasmGlobal")
+                when (instr.operator) {
+                    WasmOp.REF_FUNC -> buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(getRefFuncTableIndex(instr)))
+                    WasmOp.REF_NULL if instr.isRefNullNoFunc() -> buildInstr(WasmOp.I32_CONST, location, WasmImmediate.ConstI32(NO_FUNC_IDX))
+                    else -> buildInstr(instr.operator, location, *instr.immediates.toTypedArray())
+                }
             }
         }
     }
