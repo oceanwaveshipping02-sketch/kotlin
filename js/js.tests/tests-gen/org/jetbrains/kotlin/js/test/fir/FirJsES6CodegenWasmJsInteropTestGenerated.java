@@ -100,6 +100,12 @@ public class FirJsES6CodegenWasmJsInteropTestGenerated extends AbstractFirJsES6C
   }
 
   @Test
+  @TestMetadata("nativeInvoke.kt")
+  public void testNativeInvoke() {
+    runTest("compiler/testData/codegen/boxWasmJsInterop/nativeInvoke.kt");
+  }
+
+  @Test
   @TestMetadata("types.kt")
   public void testTypes() {
     runTest("compiler/testData/codegen/boxWasmJsInterop/types.kt");
