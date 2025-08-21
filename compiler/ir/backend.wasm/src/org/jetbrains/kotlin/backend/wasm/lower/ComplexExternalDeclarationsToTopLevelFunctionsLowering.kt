@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.backend.wasm.getJsClassForExternalClass
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.backend.js.utils.getJsModule
-import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
-import org.jetbrains.kotlin.ir.backend.js.utils.getJsQualifier
-import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
+import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
@@ -246,7 +243,8 @@ class ComplexExternalDeclarationsToTopLevelFunctionsLowering(val context: WasmBa
         if (jsFun != null &&
             function.parameters.all { it.defaultValue == null && it.varargElementType == null } &&
             currentFile.getJsQualifier() == null &&
-            currentFile.getJsModule() == null
+            currentFile.getJsModule() == null &&
+            !function.isJsNativeInvoke()
         ) {
             return
         }
@@ -256,6 +254,7 @@ class ComplexExternalDeclarationsToTopLevelFunctionsLowering(val context: WasmBa
         }
 
         val jsFunctionReference = when {
+            function.isJsNativeInvoke() -> ""
             jsFun != null -> "($jsFun)"
             function.isTopLevelDeclaration -> referenceTopLevelExternalDeclaration(function)
             else -> function.getJsNameOrKotlinName().identifier.toSavePropertyAccess(isTopLevel = false)
