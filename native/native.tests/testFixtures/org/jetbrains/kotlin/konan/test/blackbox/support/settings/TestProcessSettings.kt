@@ -334,6 +334,19 @@ internal class XCTestRunner(val isEnabled: Boolean, private val nativeTargets: K
         "${targetPlatform()}/Developer/Library/Frameworks/"
     }
 
+    val toolchainPath: String by lazy {
+        val result = try {
+            runProcess(
+                "/usr/bin/xcrun",
+                "--show-toolchain-path"
+            )
+        } catch (t: Throwable) {
+            throw IllegalStateException("Failed to run /usr/bin/xcrun process", t)
+        }
+
+        result.stdout.trim()
+    }
+
     private fun targetPlatform(): String {
         val xcodeTarget = when (val target = nativeTargets.testTarget) {
             KonanTarget.MACOS_X64, KonanTarget.MACOS_ARM64 -> "macosx"
@@ -358,6 +371,7 @@ internal class XCTestRunner(val isEnabled: Boolean, private val nativeTargets: K
 }
 
 val Settings.systemFrameworksPath: String get() = get<XCTestRunner>().frameworksPath
+val Settings.systemToolchainPath: String get() = get<XCTestRunner>().toolchainPath
 
 /**
  * A custom (i.e., the second, an alternative) distribution of the Kotlin/Native compiler.
