@@ -1,6 +1,5 @@
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.ideaExt.idea
 
 plugins {
@@ -40,8 +39,10 @@ dependencies {
 
     implementation(project(":jps:jps-common"))
     compileOnly(libs.intellij.fastutil)
+    compileOnly(intellijPlatformUtil())
     compileOnly(jpsModel())
     compileOnly(jpsBuild())
+    compileOnly(jpsBuildJavacRt())
     compileOnly(jpsModelSerialization())
     compileOnly(intellijJDom())
     testRuntimeOnly(jpsModel())
@@ -75,6 +76,7 @@ dependencies {
 
     testImplementation(testFixtures(project(":compiler:incremental-compilation-impl")))
     testImplementation(jpsBuild())
+    testImplementation(jpsBuildJavacRt())
 
     compilerModules.forEach {
         testRuntimeOnly(project(it))

@@ -17,10 +17,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
+import com.intellij.psi.tree.StubFileElementType
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.AbstractStringEnumerator
 import com.intellij.util.io.StringRef
@@ -670,13 +672,15 @@ private fun <T : PsiElement> cloneStubRecursively(
         )
 
         is PsiFileStub -> {
-            val serializer = originalStub.type
+            @Suppress("DEPRECATION", "UNCHECKED_CAST")
+            val serializer: StubFileElementType<PsiFileStub<*>> = originalStub.type as StubFileElementType<PsiFileStub<*>>
             serializer.serialize(originalStub, StubOutputStream(buffer, storage))
             serializer.deserialize(StubInputStream(buffer.toInputStream(), storage), copyParentStub)
         }
 
         else -> {
-            val serializer = originalStub.stubType
+            @Suppress("DEPRECATION", "UNCHECKED_CAST")
+            val serializer: IStubElementType<StubElement<T>, *> = originalStub.stubType as IStubElementType<StubElement<T>, *>
             serializer.serialize(originalStub, StubOutputStream(buffer, storage))
             serializer.deserialize(StubInputStream(buffer.toInputStream(), storage), copyParentStub)
         }

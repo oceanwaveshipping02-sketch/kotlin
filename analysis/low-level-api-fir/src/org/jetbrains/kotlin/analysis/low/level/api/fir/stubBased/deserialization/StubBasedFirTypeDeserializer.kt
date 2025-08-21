@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
-import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -300,6 +299,8 @@ internal class StubBasedFirTypeDeserializer(
     private fun KtFunctionType.isSuspend(): Boolean {
         val parent = parent as? KtElementImplStub<*>
             ?: error("Expected parent of KtTypeElement to have type KtElementImplStub<*>, but actual $parent")
+
+        @Suppress("DEPRECATION")
         val modifiers = parent.getStubOrPsiChildren(KtStubElementTypes.MODIFIER_LIST, KtStubElementTypes.MODIFIER_LIST.arrayFactory)
         return modifiers.any { it.hasSuspendModifier() }
     }
@@ -382,6 +383,7 @@ internal class StubBasedFirTypeDeserializer(
  * It relies on [org.jetbrains.kotlin.psi.stubs.impl.KotlinNameReferenceExpressionStubImpl.isClassRef],
  * which is set during cls analysis only.
  */
+@Suppress("DEPRECATION")
 internal fun KtUserType.classId(): ClassId {
     val packageFragments = mutableListOf<String>()
     val classFragments = mutableListOf<String>()

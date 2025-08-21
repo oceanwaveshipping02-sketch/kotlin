@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 internal class StubBasedAnnotationDeserializer(private val session: FirSession) {
     companion object {
         fun getAnnotationClassId(ktAnnotation: KtAnnotationEntry): ClassId {
+            @Suppress("DEPRECATION")
             val userType = ktAnnotation.getStubOrPsiChild(KtStubElementTypes.CONSTRUCTOR_CALLEE)
                 ?.getStubOrPsiChild(KtStubElementTypes.TYPE_REFERENCE)
                 ?.getStubOrPsiChild(KtStubElementTypes.USER_TYPE)!!

@@ -79,6 +79,8 @@ internal val KtDeclaration.modality: Modality
     }
 
 private val STUBS_KEY = Key.create<WeakReference<List<Stub>?>>("STUBS")
+
+@Suppress("DEPRECATION")
 internal fun <S, T> loadStubByElement(ktElement: T): S? where T : StubBasedPsiElementBase<*>, T : KtElement {
     ktElement.greenStub?.let {
         @Suppress("UNCHECKED_CAST")
