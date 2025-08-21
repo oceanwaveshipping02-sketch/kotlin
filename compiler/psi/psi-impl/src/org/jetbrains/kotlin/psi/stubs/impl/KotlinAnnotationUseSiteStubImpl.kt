@@ -5,17 +5,24 @@
 
 package org.jetbrains.kotlin.psi.stubs.impl
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.util.io.StringRef
 import org.jetbrains.kotlin.psi.KtAnnotationUseSiteTarget
+import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationUseSiteTargetStub
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
+@OptIn(KtImplementationDetail::class)
 class KotlinAnnotationUseSiteTargetStubImpl(
-    parent: StubElement<out PsiElement>?,
-    private val target: StringRef
+    parent: StubElement<*>?,
+    private val useSieTargetRef: StringRef,
 ) : KotlinStubBaseImpl<KtAnnotationUseSiteTarget>(parent, KtStubElementTypes.ANNOTATION_TARGET), KotlinAnnotationUseSiteTargetStub {
     override val useSiteTarget: String
-        get() = target.string
+        get() = useSieTargetRef.string
+
+    @KtImplementationDetail
+    override fun copy(newParent: StubElement<*>?): KotlinAnnotationUseSiteTargetStubImpl = KotlinAnnotationUseSiteTargetStubImpl(
+        parent = newParent,
+        useSieTargetRef = useSieTargetRef,
+    )
 }
