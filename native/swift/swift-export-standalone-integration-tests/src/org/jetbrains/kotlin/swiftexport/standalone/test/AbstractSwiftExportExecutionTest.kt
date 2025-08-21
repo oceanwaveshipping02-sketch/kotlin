@@ -82,7 +82,7 @@ abstract class AbstractSwiftExportExecutionTest : AbstractSwiftExportWithBinaryC
                 "-L", it.rootDir.absolutePath,
                 "-l${it.moduleName}",
             )
-        } + listOf(
+        } + listOfNotNull(
             "-Xcc", "-fmodule-map-file=${Distribution(KotlinNativePaths.homePath.absolutePath).kotlinRuntimeForSwiftModuleMap}",
             "-L", kotlinBinaryLibrary.libraryFile.parentFile.absolutePath,
             "-l${kotlinBinaryLibrary.libraryFile.nameWithoutExtension.removePrefix("lib")}",
@@ -90,7 +90,7 @@ abstract class AbstractSwiftExportExecutionTest : AbstractSwiftExportWithBinaryC
             "-F", testRunSettings.systemFrameworksPath,
             "-Xlinker", "-rpath", "-Xlinker", testRunSettings.systemFrameworksPath,
             "-framework", "Testing",
-            "-plugin-path", "${testRunSettings.systemToolchainPath}/usr/lib/swift/host/plugins/testing/"
+            testRunSettings.systemToolchainPath?.let { "-plugin-path ${it}/usr/lib/swift/host/plugins/testing/" }
         )
 
         val success = SwiftCompilation(
