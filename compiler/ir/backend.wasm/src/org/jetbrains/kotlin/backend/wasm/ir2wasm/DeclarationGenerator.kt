@@ -49,7 +49,7 @@ class DeclarationGenerator(
     private val unitGetInstanceFunction: IrSimpleFunction by lazy { backendContext.findUnitGetInstanceFunction() }
     private val unitPrimaryConstructor: IrConstructor? by lazy { backendContext.irBuiltIns.unitClass.owner.primaryConstructor }
 
-    private val useIndirectFuncRefs = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_SHARED_OBJECTS)
+    private val useIndirectVirtualCalls = backendContext.configuration.getBoolean(WasmConfigurationKeys.WASM_USE_SHARED_OBJECTS)
 
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
@@ -220,7 +220,7 @@ class DeclarationGenerator(
         // currently WasmGC do not support shared fun refs, so in case of "shared" objects vtable shall store indices into Wasm shared table
         // instead of func refs
         fun vtableFieldType(method: VirtualMethodMetadata): WasmType =
-            if (useIndirectFuncRefs) {
+            if (useIndirectVirtualCalls) {
                 WasmI32
             } else {
                 WasmRefNullType(WasmHeapType.Type(wasmFileCodegenContext.referenceFunctionType(method.function.symbol)))
@@ -344,7 +344,7 @@ class DeclarationGenerator(
             }
             buildStructNew(vTableTypeReference, location)
         }
-        val global = if (useIndirectFuncRefs) {
+        val global = if (useIndirectVirtualCalls) {
             // the right initializer for this mode shall set indices of table functions instead of func refs.
             // But these indices are not known until the module link phase, so we defer the "materialization"
             // of the init until that time and use the ref-based (incorrect for "shared" structs) initializer
@@ -475,7 +475,7 @@ class DeclarationGenerator(
         }
 
         val iTablesArrRefGcType = WasmRefType(WasmHeapType.Type(wasmFileCodegenContext.interfaceTableTypes.wasmAnyArrayType))
-        val wasmClassIFaceGlobal = if (useIndirectFuncRefs) {
+        val wasmClassIFaceGlobal = if (useIndirectVirtualCalls) {
             addTableFunctionsForFuncRefsOf(initITableGlobal)
             DeferredWasmGlobal("<classITable>", iTablesArrRefGcType, false, initTemplate = initITableGlobal)
         } else {

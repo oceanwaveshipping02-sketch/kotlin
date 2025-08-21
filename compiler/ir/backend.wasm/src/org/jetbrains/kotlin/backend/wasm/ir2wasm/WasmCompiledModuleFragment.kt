@@ -210,7 +210,7 @@ class WasmCompiledModuleFragment(
         if (functionsTableValues.isNotEmpty()) {
             val tableSize = functionsTableValues.size.toUInt()
             val funcTable = WasmTable(elementType = WasmFuncRef, limits = WasmLimits(tableSize, tableSize))
-            tables.add(funcTable)
+            tables.add(FUNCTIONS_TABLE, funcTable)
             elements.add(WasmElement(WasmFuncRef, functionsTableValues, WasmElement.Mode.Active(funcTable, 0)))
         }
 

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.wasm.ir
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 const val NO_FUNC_IDX = -1
+const val FUNCTIONS_TABLE = 0
 
 class WasmModule(
     val recGroups: List<List<WasmTypeDeclaration>> = emptyList(),
