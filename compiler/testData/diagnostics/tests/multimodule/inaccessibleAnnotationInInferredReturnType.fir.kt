@@ -10,12 +10,20 @@ annotation class Anno
 // FILE: b.kt
 fun f(): @Anno String = ""
 
+fun interface Sam {
+    fun foo(x: @Anno String)
+}
+
 // MODULE: c(b)
 // FILE: c.kt
 fun g() = <!MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION_ERROR!>f<!>()
 
+val sam = Sam <!MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION_ERROR!>{}<!>
+
 fun local() {
     val x = f()
+
+    val sam = Sam <!MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION_ERROR!>{}<!>
 }
 
 /* GENERATED_FIR_TAGS: annotationDeclaration, functionDeclaration, stringLiteral */
