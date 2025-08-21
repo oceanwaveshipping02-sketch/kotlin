@@ -17,7 +17,7 @@ import java.io.File
  */
 public interface AbiToolsV2 {
     /**
-     * Print ABI dump for JVM class-files specified [classfiles] into [appendable].
+     * Print ABI dump for JVM class-files from specified [classfiles] into [appendable].
      *
      * To control which declarations are passed to the dump, [filters] could be used.
      */
