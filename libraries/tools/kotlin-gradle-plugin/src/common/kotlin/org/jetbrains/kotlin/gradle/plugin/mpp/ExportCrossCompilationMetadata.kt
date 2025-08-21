@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinProjectSetupCoroutine
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
@@ -44,7 +45,7 @@ internal class CrossCompilationData(
     @get:Input
     val crossCompilationEnabled: Boolean,
 ) : KotlinShareableDataAsSecondaryVariant {
-
+    @get:Internal
     val crossCompilationSupported get() = crossCompilationEnabled && !hasCInterops
 }
 
