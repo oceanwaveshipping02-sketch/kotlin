@@ -349,15 +349,8 @@ class DeclarationGenerator(
             // But these indices are not known until the module link phase, so we defer the "materialization"
             // of the init until that time and use the ref-based (incorrect for "shared" structs) initializer
             // version as the "template" for the later modification
-            initVTableGlobal
-                .filter { it.operator == WasmOp.REF_FUNC && it.immediates.size == 1}
-                .mapNotNull { it.immediates[0] as? WasmImmediate.FuncIdx }
-                .map { it.value }
-                .forEach {
-                    wasmFileCodegenContext.addTableFunction(it)
-                }
-
-            DeferredVTableWasmGlobal("<classVTable>", vTableRefGcType, initTemplate = initVTableGlobal)
+            addTableFunctionsForFuncRefsOf(initVTableGlobal)
+            DeferredWasmGlobal("<classVTable>", vTableRefGcType, false, initTemplate = initVTableGlobal)
         } else {
             WasmGlobal("<classVTable>", vTableRefGcType, false, init = initVTableGlobal)
         }
@@ -367,6 +360,15 @@ class DeclarationGenerator(
             wasmGlobal = global
         )
     }
+
+    private fun addTableFunctionsForFuncRefsOf(initVTableOrITableGlobal: MutableList<WasmInstr>) =
+        initVTableOrITableGlobal
+            .filter { it.operator == WasmOp.REF_FUNC && it.immediates.size == 1}
+            .mapNotNull { it.immediates[0] as? WasmImmediate.FuncIdx }
+            .map { it.value }
+            .forEach {
+                wasmFileCodegenContext.addTableFunction(it)
+            }
 
     internal fun addInterfaceMethod(
         metadata: ClassMetadata,
@@ -472,12 +474,14 @@ class DeclarationGenerator(
             )
         }
 
-        val wasmClassIFaceGlobal = WasmGlobal(
-            name = "<classITable>",
-            type = WasmRefType(WasmHeapType.Type(wasmFileCodegenContext.interfaceTableTypes.wasmAnyArrayType)),
-            isMutable = false,
-            init = initITableGlobal
-        )
+        val iTablesArrRefGcType = WasmRefType(WasmHeapType.Type(wasmFileCodegenContext.interfaceTableTypes.wasmAnyArrayType))
+        val wasmClassIFaceGlobal = if (useIndirectFuncRefs) {
+            addTableFunctionsForFuncRefsOf(initITableGlobal)
+            DeferredWasmGlobal("<classITable>", iTablesArrRefGcType, false, initTemplate = initITableGlobal)
+        } else {
+            WasmGlobal("<classITable>", iTablesArrRefGcType, false, init = initITableGlobal)
+        }
+
         wasmFileCodegenContext.defineGlobalClassITable(klass.symbol, wasmClassIFaceGlobal)
     }
 

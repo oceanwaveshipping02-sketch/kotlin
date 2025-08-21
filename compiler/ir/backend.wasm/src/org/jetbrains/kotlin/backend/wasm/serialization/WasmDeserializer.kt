@@ -99,7 +99,7 @@ class WasmDeserializer(inputStream: InputStream, private val skipLocalNames: Boo
                     }
                     GlobalTags.DEFERRED_VTABLE -> {
                         val initTemplate = deserializeList(::deserializeInstr)
-                        DeferredVTableWasmGlobal(name, type, initTemplate)
+                        DeferredWasmGlobal(name, type, isMutable, initTemplate)
                     }
                     else -> tagError(tag)
                 }

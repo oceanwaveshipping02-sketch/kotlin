@@ -164,8 +164,8 @@ open class WasmGlobal protected constructor(
 }
 
 // Global with incomplete initializer. It must be "materialized" by replacing each func ref to the corresponding index in the function table
-class DeferredVTableWasmGlobal(name: String, type: WasmType, val initTemplate: List<WasmInstr>) :
-    WasmGlobal(name, type, false)
+class DeferredWasmGlobal(name: String, type: WasmType, isMutable: Boolean, val initTemplate: List<WasmInstr>) :
+    WasmGlobal(name, type, isMutable)
 {
     fun materialize(moduleTableMethodsMap: Map<WasmSymbol<WasmFunction>, Int>) {
         fun WasmInstr.isRefNullNoFunc() : Boolean {

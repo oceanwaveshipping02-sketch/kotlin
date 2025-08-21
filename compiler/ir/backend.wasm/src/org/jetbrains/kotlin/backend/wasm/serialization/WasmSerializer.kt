@@ -181,7 +181,7 @@ class WasmSerializer(outputStream: OutputStream) {
             global.importPair?.let { serializeWasmImportDescriptor(it) }
 
             if (global.isDeferred) {
-                global as? DeferredVTableWasmGlobal ?: error("Global type ${global::class} is not supported by serialization")
+                global as? DeferredWasmGlobal ?: error("Global type ${global::class} is not supported by serialization")
                 setTag(GlobalTags.DEFERRED_VTABLE)
                 serializeList(global.initTemplate, ::serializeWasmInstr)
             } else {

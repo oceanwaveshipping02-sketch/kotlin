@@ -394,9 +394,9 @@ class WasmCompiledModuleFragment(
     private fun materializeDeferredGlobals(functionsTableValues: List<WasmTable.Value.Function>) {
         val tableFunctionIndicesMap = functionsTableValues.mapIndexed { index, value -> value.function to index }.toMap()
         wasmCompiledFileFragments.forEach { fragment ->
-            fragment.globalVTables.elements
+            (fragment.globalVTables.elements + fragment.globalClassITables.elements)
                 .filter { it.isDeferred }
-                .map { it as? DeferredVTableWasmGlobal ?: error("Unknown deferred global type: ${it::class}") }
+                .map { it as? DeferredWasmGlobal ?: error("Unknown deferred global type: ${it::class}") }
                 .forEach { it.materialize(tableFunctionIndicesMap) }
         }
     }
