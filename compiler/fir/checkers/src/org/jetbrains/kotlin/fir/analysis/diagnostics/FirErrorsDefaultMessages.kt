@@ -1041,7 +1041,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION,
-            "Type annotation class ''{0}'' of the inferred return type is inaccessible. Check the module classpath for missing or conflicting dependencies.",
+            "Type annotation class ''{0}'' of the inferred type is inaccessible. Check the module classpath for missing or conflicting dependencies.",
             RENDER_TYPE,
         )
 
