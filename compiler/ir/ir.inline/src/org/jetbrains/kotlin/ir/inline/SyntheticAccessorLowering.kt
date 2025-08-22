@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.backend.common.LoweringContext
 import org.jetbrains.kotlin.backend.common.lower.inline.KlibSyntheticAccessorGenerator
 import org.jetbrains.kotlin.backend.common.phaser.PhaseDescription
 import org.jetbrains.kotlin.backend.common.reportWarning
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.isPrivate
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
@@ -53,6 +56,7 @@ class SyntheticAccessorLowering(private val context: LoweringContext, isExecuted
         val accessors = transformer.generatedAccessors.freezeAndGetAccessors()
         runIf(accessors.isNotEmpty()) {
             runIf(narrowAccessorVisibilities) { narrowAccessorVisibilities(accessors) }
+            emitWarningForPublicAccessorsInExplicitAPIMode(accessors, irFile)
             addAccessorsToParents(accessors)
         }
     }
@@ -244,6 +248,21 @@ class SyntheticAccessorLowering(private val context: LoweringContext, isExecuted
                 )
             }
             return isIncorrect
+        }
+    }
+
+    private fun emitWarningForPublicAccessorsInExplicitAPIMode(accessors: Collection<GeneratedAccessor>, irFile: IrFile) {
+        val explicitApiMode = context.configuration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode)
+        if (explicitApiMode == ExplicitApiMode.DISABLED) return
+
+        for (accessor in accessors) {
+            if (accessor.accessorFunction.visibility == DescriptorVisibilities.PUBLIC) {
+                context.reportWarning(
+                    "Public synthetic accessor '${accessor.accessorFunction.name}' was generated in explicit API mode.",
+                    irFile,
+                    accessor.accessorFunction,
+                )
+            }
         }
     }
 
