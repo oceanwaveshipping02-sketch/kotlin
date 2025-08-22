@@ -454,9 +454,7 @@ fun serializeModuleIntoKlib(
                     JsKlibCheckers.makeChecker(
                         irDiagnosticReporter,
                         configuration,
-                        // Should IrInlinerBeforeKlibSerialization be set, then calls should have already been checked during pre-serialization,
-                        // and there's no need to raise duplicates of those warnings here.
-                        doCheckCalls = !configuration.languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization),
+                        doCheckCalls = false, // calls must already be checked before pre-serialization, not now
                         doModuleLevelChecks = true,
                         cleanFilesIrData,
                         moduleExportedNames,

@@ -18,10 +18,16 @@ import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
 import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
 import org.jetbrains.kotlin.backend.wasm.WasmPreSerializationLoweringContext
 import org.jetbrains.kotlin.backend.wasm.wasmLoweringsOfTheFirstPhase
+import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
+import org.jetbrains.kotlin.diagnostics.impl.deduplicating
+import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.backend.js.JsPreSerializationLoweringContext
 import org.jetbrains.kotlin.ir.backend.js.ModulesStructure
+import org.jetbrains.kotlin.ir.backend.js.checkers.JsKlibCheckers
 import org.jetbrains.kotlin.ir.backend.js.jsLoweringsOfTheFirstPhase
 import org.jetbrains.kotlin.ir.backend.js.shouldGoToNextIcRound
+import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.js.config.wasmCompilation
 import org.jetbrains.kotlin.progress.IncrementalNextRoundException
 
@@ -33,6 +39,13 @@ object WebKlibInliningPipelinePhase : PipelinePhase<JsFir2IrPipelineArtifact, Js
     override fun executePhase(input: JsFir2IrPipelineArtifact): JsFir2IrPipelineArtifact {
         val (fir2IrResult, firOutput, configuration, diagnosticCollector, moduleStructure) = input
         processIncrementalCompilationRoundIfNeeded(configuration, moduleStructure, firOutput, fir2IrResult)
+        runKlibCallCheckers(diagnosticCollector, configuration, fir2IrResult.irModuleFragment)
+
+        if (diagnosticCollector.hasErrors) {
+            // Should errors be found by checkers, there's a chance that JsCodeOutlineLowering will throw an exception on unparseable code.
+            // So, execution of pre-serialization IR lowerings is skipped, and errors are reported.
+            return input.copy(diagnosticCollector = diagnosticCollector)
+        }
 
         val transformedResult = if (configuration.wasmCompilation) {
             PhaseEngine(
@@ -77,5 +90,22 @@ object WebKlibInliningPipelinePhase : PipelinePhase<JsFir2IrPipelineArtifact, Js
             // TODO (KT-73991): investigate the need in this hack
             throw IncrementalNextRoundException()
         }
+    }
+
+    private fun runKlibCallCheckers(
+        diagnosticReporter: BaseDiagnosticsCollector,
+        configuration: CompilerConfiguration,
+        irModuleFragment: IrModuleFragment,
+    ) {
+        val irDiagnosticReporter =
+            KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter.deduplicating(), configuration.languageVersionSettings)
+        irModuleFragment.acceptVoid(
+            JsKlibCheckers.makeChecker(
+                irDiagnosticReporter,
+                configuration,
+                doCheckCalls = true,
+                doModuleLevelChecks = false,
+            )
+        )
     }
 }
