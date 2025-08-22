@@ -14,11 +14,17 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.SubpluginEnvironment
+import org.jetbrains.kotlin.gradle.plugin.internal.KotlinProjectSharedDataProvider
+import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 import org.jetbrains.kotlin.gradle.plugin.launchInStage
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.CrossCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.consumeCrossCompilationMetadata
 import org.jetbrains.kotlin.gradle.plugin.mpp.crossCompilationOnCurrentHostSupported
+import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
+import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinCrossCompilationMetrics
 import org.jetbrains.kotlin.gradle.targets.native.toolchain.chooseKotlinNativeProvider
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
@@ -48,6 +54,8 @@ internal val KotlinCreateNativeCompileTasksSideEffect = KotlinCompilationSideEff
         }
         task.onlyIf { enabledOnCurrentHost.get() }
 
+
+        task.crossCompilationMetadata.setFrom(compilation.crossCompilationSharedData().files)
         task.destinationDirectory.set(project.klibOutputDirectory(compilationInfo).dir("klib"))
         task.runViaBuildToolsApi.value(false).disallowChanges() // K/N is not yet supported
 
@@ -87,6 +95,14 @@ internal val KotlinCreateNativeCompileTasksSideEffect = KotlinCompilationSideEff
     project.tasks.named(compilation.compileAllTaskName).dependsOn(kotlinNativeCompile)
     project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(kotlinNativeCompile)
     compilation.addCompilerPlugins()
+}
+
+private fun AbstractKotlinNativeCompilation.crossCompilationSharedData(): KotlinProjectSharedDataProvider<CrossCompilationData> {
+    val project = target.project
+
+    return project.kotlinSecondaryVariantsDataSharing.consumeCrossCompilationMetadata(
+        compilation.configurations.compileDependencyConfiguration
+    )
 }
 
 private fun AbstractKotlinNativeCompilation.addCompilerPlugins() {

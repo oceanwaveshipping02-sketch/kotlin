@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.internal.KotlinSecondaryVariantsDataSh
 import org.jetbrains.kotlin.gradle.plugin.internal.KotlinShareableDataAsSecondaryVariant
 import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 
-private const val PROJECT_CROSS_COMPILATION_SHARING_KEY = "crossCompilationMetadataSharing"
+private const val PROJECT_CROSS_COMPILATION_SHARING_KEY = "crossCompilationMetadata"
 
 internal val ExportCrossCompilationMetadata = KotlinProjectSetupCoroutine {
     val nativeTargets = project.multiplatformExtension.awaitTargets().filterIsInstance<KotlinNativeTarget>()
