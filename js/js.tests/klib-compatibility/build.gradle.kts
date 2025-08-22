@@ -26,68 +26,6 @@ dependencies {
     testImplementation(testFixtures(project(":js:js.tests")))
 }
 
-/* Configurations for custom compiler versions. */
-val customCompilerArtifacts1920: Configuration by configurations.creating
-val customCompilerArtifacts200: Configuration by configurations.creating
-val customCompilerArtifacts210: Configuration by configurations.creating
-val customCompilerArtifacts220: Configuration by configurations.creating
-// Step 1: Add a new configuration here.
-
-/* Dependencies for custom compiler versions. */
-dependencies {
-    /* 1.9.20 */
-    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
-    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.20") {
-        attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
-    }
-    customCompilerArtifacts1920("org.jetbrains.kotlin:kotlin-test-js:1.9.20") {
-        attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
-    }
-
-    /* 2.0.0 */
-    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0")
-    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-stdlib-js:2.0.0")
-    customCompilerArtifacts200("org.jetbrains.kotlin:kotlin-test-js:2.0.0")
-
-    /* 2.1.0 */
-    customCompilerArtifacts210("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.0")
-    customCompilerArtifacts210("org.jetbrains.kotlin:kotlin-stdlib-js:2.1.0")
-    customCompilerArtifacts210("org.jetbrains.kotlin:kotlin-test-js:2.1.0")
-
-    /* 2.2.0 */
-    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.0")
-    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-stdlib-js:2.2.0")
-    customCompilerArtifacts220("org.jetbrains.kotlin:kotlin-test-js:2.2.0")
-
-    // Step 2: Add the dependencies for the new configuration here.
-}
-
-/* Directories with custom compiler artifacts. */
-val customCompilerArtifactsDir1920: Provider<Directory> = layout.buildDirectory.dir("customCompiler_1920")
-val customCompilerArtifactsDir200: Provider<Directory> = layout.buildDirectory.dir("customCompiler_200")
-val customCompilerArtifactsDir210: Provider<Directory> = layout.buildDirectory.dir("customCompiler_210")
-val customCompilerArtifactsDir220: Provider<Directory> = layout.buildDirectory.dir("customCompiler_220")
-// Step 3: Add a new directory here.
-
-/* Download tasks for custom compiler artifacts. */
-val downloadCustomCompilerArtifacts1920: TaskProvider<Sync> by tasks.registering(Sync::class) {
-    from(customCompilerArtifacts1920)
-    into(customCompilerArtifactsDir1920)
-}
-val downloadCustomCompilerArtifacts200: TaskProvider<Sync> by tasks.registering(Sync::class) {
-    from(customCompilerArtifacts200)
-    into(customCompilerArtifactsDir200)
-}
-val downloadCustomCompilerArtifacts210: TaskProvider<Sync> by tasks.registering(Sync::class) {
-    from(customCompilerArtifacts210)
-    into(customCompilerArtifactsDir210)
-}
-val downloadCustomCompilerArtifacts220: TaskProvider<Sync> by tasks.registering(Sync::class) {
-    from(customCompilerArtifacts220)
-    into(customCompilerArtifactsDir220)
-}
-// Step 4: Add a new download task here.
-
 optInToExperimentalCompilerApi()
 
 sourceSets {
@@ -100,44 +38,69 @@ sourceSets {
 
 testsJar {}
 
-fun Test.setUpJsBoxTests() {
+fun Test.setUpJsBoxTests(tag: String) {
     with(d8KotlinBuild) {
         setupV8()
     }
     dependsOn(":dist")
     systemProperty("kotlin.js.test.root.out.dir", "${node.nodeProjectDir.get().asFile}/")
-    useJUnitPlatform { includeTags("custom-first-phase") }
+    useJUnitPlatform { includeTags(tag) }
     workingDir = rootDir
 }
 
-fun Test.setUpCustomCompiler(
-    customCompilerVersion: String,
-    downloadTask: TaskProvider<Sync>,
-    artifactsDir: Provider<Directory>,
-) {
-    dependsOn(downloadTask)
-    systemProperty("kotlin.internal.js.test.compat.customCompilerArtifactsDir", artifactsDir.get().asFile.absolutePath)
-    systemProperty("kotlin.internal.js.test.compat.customCompilerVersion", customCompilerVersion)
+data class CustomCompilerVersion(val rawVersion: String) {
+    val sanitizedVersion = rawVersion.replace('.', '_').replace('-', '_')
+    override fun toString() = sanitizedVersion
+}
+
+fun Project.customCompilerTest(
+    version: CustomCompilerVersion,
+    taskName: String,
+    tag: String,
+): TaskProvider<Test> {
+    val configurationName = "customCompilerArtifacts_$version"
+
+    val configuration = configurations.findByName(configurationName)
+        ?: configurations.create(configurationName).also {
+            project.dependencies.add(configurationName, "org.jetbrains.kotlin:kotlin-compiler-embeddable:${version.rawVersion}")
+            project.dependencies.add(configurationName, "org.jetbrains.kotlin:kotlin-stdlib-js:${version.rawVersion}") {
+                attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
+            }
+            project.dependencies.add(configurationName, "org.jetbrains.kotlin:kotlin-test-js:${version.rawVersion}") {
+                attributes { attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir) }
+            }
+        }
+
+    val downloadTask = getOrCreateTask<Sync>("downloadCustomCompilerArtifacts_$version") {
+        from(configuration)
+        into(layout.buildDirectory.dir("customCompiler_$version"))
+    }
+
+    return projectTest(taskName, jUnitMode = JUnitMode.JUnit5) {
+        setUpJsBoxTests(tag)
+
+        dependsOn(downloadTask)
+        systemProperty("kotlin.internal.js.test.compat.customCompilerArtifactsDir", downloadTask.get().outputs.files.first().absolutePath)
+        systemProperty("kotlin.internal.js.test.compat.customCompilerVersion", version.rawVersion)
+    }
+}
+
+fun Project.customFirstPhaseTest(rawVersion: String): TaskProvider<Test> {
+    val version = CustomCompilerVersion(rawVersion)
+
+    return customCompilerTest(
+        version = version,
+        taskName = "testCustomFirstPhase_$version",
+        tag = "custom-first-phase"
+    )
 }
 
 /* Custom-first-phase test tasks for different compiler versions. */
-projectTest("testCustomFirstPhase1920", jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests()
-    setUpCustomCompiler("1.9.20", downloadCustomCompilerArtifacts1920, customCompilerArtifactsDir1920)
-}
-projectTest("testCustomFirstPhase200", jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests()
-    setUpCustomCompiler("2.0.0", downloadCustomCompilerArtifacts200, customCompilerArtifactsDir200)
-}
-projectTest("testCustomFirstPhase210", jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests()
-    setUpCustomCompiler("2.1.0", downloadCustomCompilerArtifacts210, customCompilerArtifactsDir210)
-}
-projectTest("testCustomFirstPhase220", jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests()
-    setUpCustomCompiler("2.2.0", downloadCustomCompilerArtifacts220, customCompilerArtifactsDir220)
-}
-// Step 5: Add a new test task here.
+customFirstPhaseTest("1.9.20")
+customFirstPhaseTest("2.0.0")
+customFirstPhaseTest("2.1.0")
+customFirstPhaseTest("2.2.0")
+// TODO: Add a new task for the "custom-first-phase" test here.
 
 @Suppress("unused")
 val test by tasks.getting(Test::class) {
