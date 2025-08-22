@@ -519,7 +519,7 @@ private fun computeIndex(
         // Stub calculation
         if (indexableFile.isShared && cacheService != null) {
             val stub = cacheService.getOrBuildStub(virtualFile) {
-                ktFile.calcStubTree().root as KotlinFileStubImpl
+                ktFile.forcedStub
             }
 
             if (stub.psi != ktFile) {
@@ -529,11 +529,9 @@ private fun computeIndex(
                 // A hack to avoid costly stub builder execution
                 setStubTreeMethod.invoke(ktFile, clonedStub)
             }
-        } else {
-            ktFile.calcStubTree()
         }
 
-        val stub = ktFile.greenStub as KotlinFileStubImpl
+        val stub = ktFile.forcedStub
         index.indexStubRecursively(stub)
     }
 
@@ -622,6 +620,15 @@ private fun computeIndex(
         },
     )
 }
+
+/**
+ * [PsiFileImpl.getGreenStubTree] is cheaper if it is available since it doesn't require computing the AST tree
+ */
+private val KtFile.forcedStub: KotlinFileStubImpl
+    get() {
+        val stubTree = greenStubTree ?: calcStubTree()
+        return stubTree.root as KotlinFileStubImpl
+    }
 
 /**
  * Test application service to store stubs of shared between tests libraries.
