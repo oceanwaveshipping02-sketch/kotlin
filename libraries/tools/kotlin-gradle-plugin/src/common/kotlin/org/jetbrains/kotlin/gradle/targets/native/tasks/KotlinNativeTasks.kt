@@ -14,7 +14,6 @@ import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.*
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -49,7 +48,6 @@ import org.jetbrains.kotlin.gradle.plugin.cocoapods.asValidFrameworkName
 import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.useXcodeMessageStyle
-import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.plugin.statistics.NativeCompilerOptionMetrics
 import org.jetbrains.kotlin.gradle.plugin.statistics.UsesBuildFusService
 import org.jetbrains.kotlin.gradle.plugin.tcs
@@ -333,7 +331,22 @@ internal constructor(
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories
     @get:NormalizeLineEndings
-    internal val crossCompilationMetadata: ConfigurableFileCollection = project.files()
+    internal val crossCompilationMetadata: FileCollection = project.kotlinSecondaryVariantsDataSharing.consumeCrossCompilationMetadata(
+        (compilation.tcs.compilation as AbstractKotlinNativeCompilation).configurations.compileDependencyConfiguration
+    ).files
+
+    @get:Internal
+    internal val crossCompilationDependenciesSupported: Provider<Boolean> = project.provider {
+        val crossCompilationData = project.kotlinSecondaryVariantsDataSharing.consumeCrossCompilationMetadata(
+            (compilation.tcs.compilation as AbstractKotlinNativeCompilation).configurations.compileDependencyConfiguration
+        ).getDataForAllDependencies()
+
+        if (crossCompilationData.isEmpty()) {
+            true
+        } else {
+            crossCompilationData.any { it.crossCompilationSupported }
+        }
+    }
 
     @get:Nested
     internal val kotlinNativeProvider: Property<KotlinNativeProvider> =
