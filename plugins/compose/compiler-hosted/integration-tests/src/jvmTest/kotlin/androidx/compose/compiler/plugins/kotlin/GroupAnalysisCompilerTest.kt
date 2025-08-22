@@ -351,6 +351,17 @@ class GroupAnalysisCompilerTest(
         checkOptimizeGroups = true
     )
 
+    @Test
+    fun arrayParameters() = groups(
+        """
+            @Composable
+            fun Test(ints: IntArray, strings: Array<String>) {
+                println(ints)
+                println(strings)
+            }
+        """
+    )
+
     @JvmField
     @Rule
     val goldenTransformRule = GoldenTransformRule()

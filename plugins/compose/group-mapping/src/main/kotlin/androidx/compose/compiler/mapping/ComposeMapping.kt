@@ -39,17 +39,8 @@ class ComposeMapping(
 
     fun writeProguardMapping(writer: Appendable) {
         writer.appendLine("ComposeStackTrace -> ${"$$"}compose:")
-        val additionalFileNames = mutableListOf<Entry>()
         entries.patchGroupKeys().forEach { entry ->
             writer.appendEntry(entry.cls, entry.method, entry.group)
-            // todo(ashikov): Validate if this is still needed with when R8 supports Kotlin 2.3.0 metadata
-//            if (entry.cls.classId.value.contains("ComposableSingletons$")) {
-//                additionalFileNames.add(entry)
-//            }
-        }
-
-        additionalFileNames.forEach { entry ->
-            writer.appendFileName(entry.cls)
         }
     }
 
@@ -71,19 +62,6 @@ class ComposeMapping(
         append(" -> ")
         append("m$")
         append(group.key.toString())
-        appendLine()
-    }
-
-    private fun Appendable.appendFileName(cls: ClassInfo) {
-        val fqName = cls.classId.fqName
-        append(fqName)
-        append(" -> ")
-        append(fqName)
-        append(":")
-        appendLine()
-        append("# {\"id\":\"sourceFile\",\"fileName\":\"")
-        append(cls.fileName)
-        append("\"}")
         appendLine()
     }
 
