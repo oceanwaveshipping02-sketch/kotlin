@@ -7,28 +7,29 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.KtRealSourceElementKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLPartialBodyAnalysisState
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.partialBodyAnalysisState
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.withFirDesignationEntry
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingOrThisDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.isAutonomousElement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLPartialBodyElementMapper
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.isAutonomousElement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.Context
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.ContextKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.FilterResponse
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.SessionAndScopeSessionHolder
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.declarations.utils.isScriptTopLevelDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.memberDeclarationNameOrNull
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.psi
-import org.jetbrains.kotlin.fir.realPsi
-import org.jetbrains.kotlin.fir.SessionAndScopeSessionHolder
-import org.jetbrains.kotlin.fir.declarations.utils.isScriptTopLevelDeclaration
 import org.jetbrains.kotlin.fir.extensions.scriptResolutionHacksComponent
+import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitValue
 import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowAnalyzerContext
@@ -48,6 +49,7 @@ import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
+import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -143,7 +145,7 @@ object ContextCollector {
     private fun partiallyResolveTargetElementIfPossible(
         resolutionFacade: LLResolutionFacade,
         designation: FirDesignation?,
-        targetElement: PsiElement
+        targetElement: PsiElement,
     ): Boolean {
         val declaration = designation?.target?.realPsi as? KtDeclaration ?: return false
 
@@ -291,7 +293,18 @@ private class ContextCollectorVisitor(
             return
         }
 
-        val psi = fir.psi ?: return
+        val psi = fir.source?.takeIf {
+            when (it.kind) {
+                KtRealSourceElementKind,
+
+                    // A list of real source elements that have a fake kind for some reason
+                KtFakeSourceElementKind.DanglingModifierList,
+                KtFakeSourceElementKind.FromUseSiteTarget,
+                    -> true
+
+                else -> false
+            }
+        }?.psi ?: return
 
         val key = ContextKey(psi, kind)
         if (key in result) {
@@ -1087,7 +1100,7 @@ private class ContextCollectorVisitor(
     private inner class FilteringVisitor(
         val delegate: FirVisitorVoid,
         val elementsToSkip: Set<FirElement>,
-        val checkIsActive: Boolean
+        val checkIsActive: Boolean,
     ) : FirVisitorVoid() {
         override fun visitElement(element: FirElement) {
             if (checkIsActive && !isActive) {
