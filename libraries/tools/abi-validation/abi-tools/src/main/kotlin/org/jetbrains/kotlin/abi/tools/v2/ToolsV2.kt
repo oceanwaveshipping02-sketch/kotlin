@@ -17,25 +17,18 @@ import java.io.InputStream
 import java.util.jar.JarFile
 
 internal object ToolsV2 : AbiToolsV2 {
-    override fun <T : Appendable> printJvmDump(
-        appendable: T,
-        classfiles: Iterable<File>,
-        filters: AbiFilters,
-    ) {
-        printJvmDump(appendable, classfiles, emptyList(), filters)
-    }
 
     override fun <T : Appendable> printJvmDump(
         appendable: T,
-        classfiles: Iterable<File>,
-        jarFiles: Iterable<File>,
+        inputFiles: Iterable<File>,
         filters: AbiFilters,
         internalDeclarationsAsPublic: KotlinClassNamePredicate,
     ) {
         val filtersMatcher = compileMatcher(filters)
 
-        val inputStreams = streamsFromClassFiles(classfiles) + jarFiles.asSequence().flatMap { streamsFromJar(it) }
-        val signatures = inputStreams.loadApiFromJvmClasses(internalDeclarationsAsPublic).filterByMatcher(filtersMatcher)
+        val signatures = streamsForInputFiles(inputFiles)
+            .loadApiFromJvmClasses(internalDeclarationsAsPublic)
+            .filterByMatcher(filtersMatcher)
 
         signatures.dump(appendable)
     }
@@ -72,7 +65,16 @@ internal object ToolsV2 : AbiToolsV2 {
             }.map { entry -> jar.getInputStream(entry) }
     }
 
-    private fun streamsFromClassFiles(classfiles: Iterable<File>): Sequence<InputStream> {
-        return classfiles.asSequence().map { classFile -> classFile.inputStream() }
+    private fun streamsForInputFiles(inputFiles: Iterable<File>): Sequence<InputStream> {
+        return inputFiles.asSequence().flatMap { file ->
+            if (!file.exists() || !file.isFile) {
+                return@flatMap emptySequence()
+            }
+            when (file.extension) {
+                "jar" -> streamsFromJar(file)
+                "class" -> sequenceOf(file.inputStream())
+                else -> emptySequence()
+            }
+        }
     }
 }

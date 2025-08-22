@@ -155,7 +155,7 @@ internal fun KotlinClassMetadata.toClassVisibility(classNode: ClassNode): ClassV
 }
 
 internal fun Map<String, ClassNode>.readKotlinVisibilities(
-    packageCache: MutableMap<String, String>,
+    packagePool: MutableMap<String, String>,
     internalDeclarationsAsPublic: KotlinClassNamePredicate
 ): Map<String, ClassVisibility> =
     /*
@@ -168,7 +168,7 @@ internal fun Map<String, ClassNode>.readKotlinVisibilities(
         .mapNotNull { (name, classNode) ->
             val metadata = classNode.kotlinMetadata
 
-            val qualifiedName = classNode.qualifiedClassName(metadata, packageCache)
+            val qualifiedName = classNode.qualifiedClassName(metadata, packagePool)
             if (internalDeclarationsAsPublic.test(qualifiedName.first, qualifiedName.second)) {
                 return@mapNotNull null
             }

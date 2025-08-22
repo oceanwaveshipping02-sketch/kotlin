@@ -192,12 +192,12 @@ internal fun doCheck(
 
     if (!target.exists()) {
         target.bufferedWriter().use { writer ->
-            ToolsV2.printJvmDump(writer, testClasses, jarFiles, filters, internalToPublic)
+            ToolsV2.printJvmDump(writer, testClasses + jarFiles, filters, internalToPublic)
         }
         fail("Expected data file did not exist. Generating: $target")
     } else {
         val stringBuffer = StringBuffer()
-        ToolsV2.printJvmDump(stringBuffer, testClasses, jarFiles, filters, internalToPublic)
+        ToolsV2.printJvmDump(stringBuffer, testClasses + jarFiles, filters, internalToPublic)
         assertEqualsToFile(target, stringBuffer.toString())
     }
 }

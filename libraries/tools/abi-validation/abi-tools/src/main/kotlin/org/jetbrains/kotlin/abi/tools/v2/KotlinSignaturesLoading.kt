@@ -16,7 +16,6 @@ import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.tree.*
 import java.io.*
 import java.util.*
-import java.util.jar.*
 import kotlin.metadata.KmProperty
 
 internal fun Sequence<InputStream>.loadApiFromJvmClasses(internalDeclarationsAsPublic: KotlinClassNamePredicate): List<ClassBinarySignature> {
@@ -30,11 +29,11 @@ internal fun Sequence<InputStream>.loadApiFromJvmClasses(internalDeclarationsAsP
         if (node.name == "module-info") null else node
     }
 
-    val packageCache = mutableMapOf<String, String>()
+    val packagePool = mutableMapOf<String, String>()
 
     // Note: map is sorted, so the dump will produce stable result
     val classNodeMap = classNodes.associateByTo(TreeMap()) { it.name }
-    val visibilityMap = classNodeMap.readKotlinVisibilities(packageCache, internalDeclarationsAsPublic)
+    val visibilityMap = classNodeMap.readKotlinVisibilities(packagePool, internalDeclarationsAsPublic)
     return classNodeMap
         .values
         .map { classNode ->
@@ -82,7 +81,7 @@ internal fun Sequence<InputStream>.loadApiFromJvmClasses(internalDeclarationsAsP
                     packageName = mVisibility.packageName
                     kotlinName = mVisibility.kotlinName
                 } else {
-                    val qualifiedName = qualifiedClassName(metadata, packageCache)
+                    val qualifiedName = qualifiedClassName(metadata, packagePool)
                     packageName = qualifiedName.first
                     kotlinName = qualifiedName.second
                 }
@@ -181,7 +180,7 @@ private fun List<AnnotationNode>.extractAnnotationQualifiedNames(): List<String>
     return map { it.desc.jvmTypeDescToCanonical().run { "$first.$second" } }
 }
 
-internal fun ClassNode.qualifiedClassName(metadata: KotlinClassMetadata?, packageCache: MutableMap<String, String>): Pair<String, String> {
+internal fun ClassNode.qualifiedClassName(metadata: KotlinClassMetadata?, packagePool: MutableMap<String, String>): Pair<String, String> {
     val qualifiedName = when {
         metadata is KotlinClassMetadata.Class -> metadata.kmClass.name.metadataNameToQualified()
         metadata is KotlinClassMetadata.FileFacade -> name.jvmInternalToCanonical()
@@ -192,7 +191,8 @@ internal fun ClassNode.qualifiedClassName(metadata: KotlinClassMetadata?, packag
         else -> name.jvmInternalToCanonical()
     }
 
-    val packageName = packageCache.getOrPut(qualifiedName.first) { qualifiedName.first }
+    // deduplicate string instances because they are often repeated - it will help GC collect these instances faster
+    val packageName = packagePool.getOrPut(qualifiedName.first) { qualifiedName.first }
 
     return packageName to qualifiedName.second
 }

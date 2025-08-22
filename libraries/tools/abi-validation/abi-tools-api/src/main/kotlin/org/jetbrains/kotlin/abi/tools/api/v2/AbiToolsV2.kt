@@ -17,14 +17,8 @@ import java.io.File
  */
 public interface AbiToolsV2 {
     /**
-     * Print ABI dump for JVM class-files from specified [classfiles] into [appendable].
-     *
-     * To control which declarations are passed to the dump, [filters] could be used.
-     */
-    public fun <T : Appendable> printJvmDump(appendable: T, classfiles: Iterable<File>, filters: AbiFilters)
-
-    /**
-     * Print ABI dump for JVM class-files from specified [classfiles] and jar files [jarFiles] into specified [appendable].
+     * Print ABI dump for JVM from [inputFiles] into specified [appendable].
+     * It is possible to pass class-files or jar files in [inputFiles].
      *
      * To control which declarations are passed to the dump, [filters] could be used. By default, no filters will be applied.
      *
@@ -32,10 +26,9 @@ public interface AbiToolsV2 {
      */
     public fun <T : Appendable> printJvmDump(
         appendable: T,
-        classfiles: Iterable<File> = emptyList(),
-        jarFiles: Iterable<File> = emptyList(),
-        filters: AbiFilters = AbiFilters.EMPTY,
-        internalDeclarationsAsPublic: KotlinClassNamePredicate = KotlinClassNamePredicate.NONE,
+        inputFiles: Iterable<File>,
+        filters: AbiFilters,
+        internalDeclarationsAsPublic: KotlinClassNamePredicate = KotlinClassNamePredicate.NONE
     )
 
     /**
